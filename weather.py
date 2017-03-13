@@ -1,51 +1,57 @@
 import json
 import requests
 from datetime import datetime
-
+from util import dump_data_to_file
+from tokens import GOOGLE_MAPS_TOKEN
 
 
 class Weather:
-    def find_weather(self):
-        loc_obj = self.get_location()
+    def __init__(self, weather_api_token):
+        self.weather_api_token = weather_api_token
+
+    def find_weather(self, city):
+        loc_obj = self.get_coordinates(city)
 
         lat = loc_obj['lat']
-        lon = loc_obj['lon']
+        lng = loc_obj['lng']
 
-        weather_req_url = "https://api.darksky.net/forecast/%s/%s,%s" % (self.weather_api_token, lat, lon)
+        weather_req_url = "https://api.darksky.net/forecast/%s/%s,%s" % (self.weather_api_token, lat, lng)
         r = requests.get(weather_req_url)
         weather_json = json.loads(r.text)
+
+        print(weather_json.keys())
+        dump_data_to_file(weather_json, "weather.json")
+
 
         temperature = int(weather_json['currently']['temperature'])
 
         current_forecast = weather_json['currently']['summary']
-        hourly_forecast = weather_json['minutely']['summary']
-        daily_forecast = weather_json['hourly']['summary']
-        weekly_forecast = weather_json['daily']['summary']
+        hourly_forecast = weather_json['hourly']['summary']
+        daily_forecast = weather_json['daily']['summary']
         icon = weather_json['currently']['icon']
         wind_speed = int(weather_json['currently']['windSpeed'])
 
         return {'temperature': temperature, 'icon': icon, 'windSpeed': wind_speed,
                 'current_forecast': current_forecast, 'hourly_forecast': hourly_forecast,
-                'daily_forecast': daily_forecast, 'weekly_forecast': weekly_forecast}
+                'daily_forecast': daily_forecast}
 
-    def get_location(self):
+    def get_coordinates(self, city='Berlin'):
         # get location
-        location_req_url = "http://freegeoip.net/json/%s" % self.get_ip()
+        location_req_url = "https://maps.googleapis.com/maps/api/geocode/json?address=" + city + "&key=" + GOOGLE_MAPS_TOKEN
         r = requests.get(location_req_url)
         location_obj = json.loads(r.text)
+        
+        dump_data_to_file(location_obj, "location.json")
 
-        lat = location_obj['latitude']
-        lon = location_obj['longitude']
+        lat = location_obj['results'][0]['geometry']['location']['lat']
+        lng = location_obj['results'][0]['geometry']['location']['lng']
+        print(lat, lng)
 
-        return {'lat': lat, 'lon': lon}
+        return {'lat': lat, 'lng': lng}
 
-    def __weather_action(self, nlu_entities=None):
-        current_dtime = datetime.datetime.now()
+    def get_ip(self):
+        ip_url = "http://jsonip.com/"
+        req = requests.get(ip_url)
+        ip_json = json.loads(req.text)
+        return ip_json['ip']
 
-        weather_obj = self.knowledge.find_weather()
-        temperature = weather_obj['temperature']
-        icon = weather_obj['icon']
-        wind_speed = weather_obj['windSpeed']
-
-
-weather_api_token = '515b1a5c1216ffa30793e24c4f09b94a'

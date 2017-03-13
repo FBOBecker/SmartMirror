@@ -11,6 +11,9 @@ def speech():
         msg = r.recognize_google(audio)
     except sr.UnknownValueError:
         msg = "Unknown Value Error"
+        return msg
     except sr.RequestError:
         msg = "Request Error"
+        return msg
+    print("You said '" + msg + "'")
     return msg
