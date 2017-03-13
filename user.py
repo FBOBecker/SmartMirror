@@ -1,13 +1,15 @@
 import os
 import json
 from speech import speech
+from util import *
 
+__all__ = ['APPROVAL_LIST', 'CANCEL_LIST', 'DECLINE_LIST','User']
 
 user_dir = os.path.relpath("./users/",".")
 
-approval_list = ["yes", "yep", "si", "aye", "yo"]
-cancel_list = ["cancel", "abort", "stop"]
-decline_list = ["no", "nope"]
+APPROVAL_LIST = ["yes", "yep", "si", "aye", "yo"]
+CANCEL_LIST = ["cancel", "abort", "stop"]
+DECLINE_LIST = ["no", "nope"]
 
 
 class User:
@@ -57,7 +59,7 @@ class User:
 			hobby = speech()
 			print("You said '" + hobby + "'. Is that correct?")
 			command = speech()
-			if (any(command in w for w in approval_list)):
+			if (any(command in w for w in APPROVAL_LIST)):
 
 				hobby_list = self.get_hobby_list()
 				hobby_list.append({"name": hobby})
@@ -70,7 +72,7 @@ class User:
 					
 				in_loop = False
 
-			elif (any(command in w for w in cancel_list)):
+			elif (any(command in w for w in CANCEL_LIST)):
 				in_loop = False
 
 	def remove_hobbies(self):
@@ -107,9 +109,9 @@ class User:
 						print("Do you really want to remove '" +  hobby_to_remove + "' from your hobbies?")
 
 						approval_command = speech()
-						cancel_list.extend(decline_list)
+						CANCEL_LIST.extend(DECLINE_LIST)
 
-						if any(approval_command in w for w in approval_list):
+						if any(approval_command in w for w in APPROVAL_LIST):
 							item_index = next(index for (index, hobby) in enumerate(hobbies) if hobby['name'] == hobby_to_remove)
 							del hobbies[item_index]
 
@@ -125,56 +127,15 @@ class User:
 							waiting_for_approval = False
 							in_loop = False
 
-						elif any(approval_command in w for w in cancel_list):
+						elif any(approval_command in w for w in CANCEL_LIST):
 							waiting_for_approval = False
 
 
-				elif any(command in w for w in cancel_list):
+				elif any(command in w for w in CANCEL_LIST):
 					print("Cancelled hobby deletion - going back to main menu")
 					return
 
 				else:
-					print("What you said didn't match any of your hobbies. Try again; to cancel use a word of the cancel_list.")
-
-
-
-def number_conversion(number):
-	num2words = {1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five', \
-				6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten', \
-				11: 'eleven', 12: 'twelve', 13: 'thirteen', 14: 'fourteen', \
-				15: 'fifteen', 16: 'sixteen', 17: 'seventeen', 18: 'eighteen', 19: 'nineteen'}
-		
-	return num2words[number]
-
-
-"""
-Methode um die jsondata eines files zu bekommen
-returns: None if file is empty
-			dictionary else
-"""
-def get_data_from_file(path):
-	if not(os.stat(path).st_size == 0):
-		f = open(path, "r")
-		data= json.load(f)
-		f.close()
-		return data
-	else:
-		return None
-
-
-#dump data to in jsonformat to jsonfile
-def dump_data_to_file(data, path):
-	f = open(path, "w+")
-	json.dump(data, f, indent=4)
-	f.close()
-
-
-def is_json(file):
-    try:
-        json_object = json.load(file)
-    except ValueError:
-        print('invalid json')
-        return False
-    return True
+					print("What you said didn't match any of your hobbies. Try again; to cancel use a word of the CANCEL_LIST.")
 
 
