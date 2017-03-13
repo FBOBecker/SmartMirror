@@ -11,6 +11,7 @@ from datetime import datetime
 from user import *
 from wit import *
 from util import *
+from weather import Weather
 
 
 
@@ -21,27 +22,28 @@ weather_api_token = tokens.WEATHER_API_TOKEN
 class Bot:
     def __init__(self):
         self.current_user = None
-        self.ai = Wit()
-        self.ai.analyze_request('Gochsheim')
-        self.weather = ''
+        #self.ai = Wit()
+        #self.ai.analyze_request('Gochsheim')
+        self.weather = Weather(weather_api_token)
+        cities = get_data_from_file("cities.json")
+        self.cities = cities['cities']
 
     def run(self):
         """
         Bot running
         """
 
-        if os.path.isfile("last_use.json"):
-
-            data = get_data_from_file("last_use.json")
-            if data is not None:
-                if 'name' in data:
-                    self.login(data['name'])
-                    print("Welcome back, " + self.current_user.name + "!")
-                    self.current_user.show_hobbies()
-
+        data = get_data_from_file("last_use.json")
+        if data is not None:
+            if 'name' in data:
+                self.login(data['name'])
+                print("Welcome back, " + self.current_user.name + "!")
+                self.current_user.show_hobbies()
         else:
-            f = open("last_use.json", "w+")
-            f.close()
+            with open("last_use.json", "w+"):
+                pass
+
+        self.__get_forecast()
 
         while True:
             if(self.logged_in()):
@@ -78,16 +80,22 @@ class Bot:
                 print("Log in to view your hobbies.")
         elif any(command in w for w in ["who am I", "Who"]):
             self.who_am_i()
+        elif any(command in w for w in self.cities):
+            self.__get_forecast(command)
         else:
-            print("You said " + command)
+            print("I do not understand that command yet, sorry.")
         
 
-    def __weather_action(self):
+    def __get_forecast(self, city='Heidelberg'):
         current_dtime = datetime.now()
-        weather_obj = self.weather.find_weather()
+        weather_obj = self.weather.find_weather(city)
         temperature = weather_obj['temperature']
+        temperature = (temperature - 32)*5/9
+        temperature = "{0:.1f}".format(temperature)
         icon = weather_obj['icon']
         wind_speed = weather_obj['windSpeed']
+
+        print("It currently is " + temperature + " degrees celcius.")
 
 
     def hobby_selection(self):

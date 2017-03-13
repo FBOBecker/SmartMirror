@@ -1,5 +1,5 @@
-import os
-import json
+from json import load, dump
+from json.decoder import JSONDecodeError
 
 def number_conversion(number):
     num2words = {1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five', \
@@ -16,22 +16,22 @@ returns: None if file is empty
             dictionary else
 """
 def get_data_from_file(path):
-    if not(os.stat(path).st_size == 0):
+    try:
         with open(path) as f:
-            return json.load(f)
-    else:
+            return load(f)  
+    except (IOError, JSONDecodeError):
         return None
 
 
 #dump data to in jsonformat to jsonfile
 def dump_data_to_file(data, path):
     with open(path, "w+") as f:
-        json.dump(data, f, indent=4)
+        dump(data, f, indent=4)
 
 
 def is_json(file):
     try:
-        json_object = json.load(file)
+        json_object = load(file)
     except ValueError:
         print('invalid json')
         return False
