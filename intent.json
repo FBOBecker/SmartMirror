@@ -1,0 +1,10 @@
+{
+	"weather":[
+		"weather",
+		"rain"
+		],
+	"greeting":[
+		"hello",
+		"hi"
+		]
+}

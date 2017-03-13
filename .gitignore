@@ -87,3 +87,9 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Macfag
+.DS_Store
+
+# PyCharm
+.idea/
