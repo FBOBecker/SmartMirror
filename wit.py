@@ -1,6 +1,6 @@
 import time
+from util import *
 
-from user import get_data_from_file
 
 #AI class that returns the intent of the request and the keywords
 class Wit:
