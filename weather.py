@@ -3,7 +3,6 @@ import requests
 from datetime import datetime
 
 
-
 class Weather:
     def find_weather(self):
         loc_obj = self.get_location()
