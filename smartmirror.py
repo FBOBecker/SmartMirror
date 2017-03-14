@@ -16,6 +16,7 @@ except ImportError:
 
 import os
 import json
+import sys
 from datetime import datetime
 from user import *
 from util import *
@@ -60,7 +61,6 @@ class Bot(QThread):
             except Exception as e:
                 print(e)
                 continue
-            print("2")
             self.action(command)
 
     def action(self, command):
@@ -327,6 +327,13 @@ class Bot(QThread):
                 os.remove("last_use.json")
 
 if __name__ == "__main__":
+    mode = 'speech'
+    if(len(sys.argv) > 1):
+        if(sys.argv[1] == 'write'):
+            from speech import write
+            speech = write
+
+    print('mode:' + mode)
     app = QApplication([])
     win = QWebView()
     win.show()

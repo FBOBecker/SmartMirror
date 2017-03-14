@@ -17,3 +17,8 @@ def speech():
         return msg
     print("You said '" + msg + "'")
     return msg
+
+
+def write():
+    print("Watiting for you to type what you want.")
+    return input()

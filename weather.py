@@ -50,9 +50,3 @@ class Weather:
         print(lat, lng)
 
         return {'lat': lat, 'lng': lng}
-
-    def get_ip(self):
-        ip_url = "http://jsonip.com/"
-        req = requests.get(ip_url)
-        ip_json = json.loads(req.text)
-        return ip_json['ip']
