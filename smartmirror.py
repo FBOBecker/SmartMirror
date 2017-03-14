@@ -1,3 +1,9 @@
+from time import sleep
+
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWebKitWidgets import QWebView
+from PyQt5.QtCore import QUrl, QThread, pyqtSignal
+
 try:
     import tokens
 except ImportError:
@@ -12,15 +18,16 @@ from user import *
 from wit import *
 from util import *
 from weather import Weather
-
-
-
 from speech import speech
 
 weather_api_token = tokens.WEATHER_API_TOKEN
 
-class Bot:
+
+class Bot(QThread):
+    page_changed = pyqtSignal(QUrl)
+
     def __init__(self):
+        super().__init__()
         self.current_user = None
         #self.ai = Wit()
         #self.ai.analyze_request('Gochsheim')
@@ -42,15 +49,18 @@ class Bot:
         else:
             with open("last_use.json", "w+"):
                 pass
-
-        self.__get_forecast()
-
         while True:
+            sleep(0.1)
             if(self.logged_in()):
                 "Hello " + self.current_user.name + "!"
             print("You are in main menu.\nAsk me what I can do.")
             self.update_file()
-            command = speech()
+            try:
+                command = speech()
+            except Exception as e:
+                print(e)
+                continue
+            print("2")
             self.action(command)
 
     def action(self, command):
@@ -61,9 +71,9 @@ class Bot:
         """
         if any(command in w for w in ["hello", "hi"]):
             print("Greetings")
+            self.page_changed.emit(QUrl("http://localhost/forecast"))
         elif any(command in w for w in ["shutdown bot", "shutdown system", "shut down", "shutdown"]):
             print("Goodbye!")
-            exit()
         elif any(command in w for w in ["login", "I want to login", "new account", "user", "new user"]):
             if not self.logged_in():
                 self.user_selection()
@@ -81,22 +91,11 @@ class Bot:
         elif any(command in w for w in ["who am I", "Who"]):
             self.who_am_i()
         elif any(command in w for w in self.cities):
-            self.__get_forecast(command)
+            self.page_changed.emit(QUrl("http://localhost/forecast/" + command))
+        elif command == "weather":
+            self.page_changed.emit(QUrl("http://localhost/weather"))
         else:
-            print("I do not understand that command yet, sorry.")
-        
-
-    def __get_forecast(self, city='Heidelberg'):
-        current_dtime = datetime.now()
-        weather_obj = self.weather.find_weather(city)
-        temperature = weather_obj['temperature']
-        temperature = (temperature - 32)*5/9
-        temperature = "{0:.1f}".format(temperature)
-        icon = weather_obj['icon']
-        wind_speed = weather_obj['windSpeed']
-
-        print("It currently is " + temperature + " degrees celcius.")
-
+            print(command + "\nI do not understand that command yet, sorry.")
 
     def hobby_selection(self):
         print("Do you want to:\n1.View your hobbies?\n2.Add hobbies?\n3.Remove hobbies?\n4.Go back?")
@@ -113,9 +112,6 @@ class Bot:
             self.current_user.remove_hobbies()
         elif any(command in w for w in ["four", "back", "go back"]):
             return
-
-
-
 
     def user_selection(self):
         in_user_selection = True
@@ -151,7 +147,6 @@ class Bot:
             self.current_user.name = new_user
             self.current_user.location = ''
 
-
         else:
             correct = False
             while correct == False:
@@ -164,7 +159,6 @@ class Bot:
                 if any(approval_command in w for w in APPROVAL_LIST):
                     print("You said "+ approval_command + ".")
                     correct = True
-            
             #check if 'users.json'-file alrdy exists
             if not os.path.isfile("users.json"):
                 f = open("users.json", "w+")
@@ -289,9 +283,6 @@ class Bot:
 
                 self.update_file()
 
-
-
-
     def logout(self):
         if(self.logged_in()):
             self.current_user = None
@@ -314,7 +305,6 @@ class Bot:
     def show_users(self):
         print(self.get_user_list())
 
-
     def get_user_list(self):
         if os.path.isfile("users.json"):
             user_data = get_data_from_file("users.json")
@@ -324,8 +314,6 @@ class Bot:
                     user_list.append(user['name'])
                 return user_list
         return None
-                
-
 
     def update_file(self):
         if self.logged_in():
@@ -335,8 +323,16 @@ class Bot:
             if(os.path.isfile("last_use.json")):
                 os.remove("last_use.json")
 
-
-
 if __name__ == "__main__":
+    app = QApplication([])
+    win = QWebView()
+    win.show()
+    win.loadFinished.connect(lambda ok: print("finish", ok))
+    win.loadProgress.connect(lambda p: print("progress", p))
+    win.loadStarted.connect(lambda: print("started"))
+    win.load(QUrl("http://localhost"))
     bot = Bot()
-    bot.run()
+    bot.page_changed.connect(lambda url: print("Url changed", url))
+    bot.page_changed.connect(win.load)
+    bot.start()
+    app.exec_()
