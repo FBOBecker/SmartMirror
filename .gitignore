@@ -1,5 +1,13 @@
 # Project specific
 tokens.py
+location.json
+weather.json
+wit.json
+intent.json
+last_use.json
+german_cities.json
+captials.json
+users.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,7 +1,10 @@
 from time import sleep
 
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtWebKitWidgets import QWebView
+try:
+    from PyQt5.QtWebKitWidgets import QWebView
+except ImportError:
+    from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
 from PyQt5.QtCore import QUrl, QThread, pyqtSignal
 
 try:
@@ -15,7 +18,6 @@ import os
 import json
 from datetime import datetime
 from user import *
-from wit import *
 from util import *
 from weather import Weather
 from speech import speech
@@ -29,8 +31,6 @@ class Bot(QThread):
     def __init__(self):
         super().__init__()
         self.current_user = None
-        #self.ai = Wit()
-        #self.ai.analyze_request('Gochsheim')
         self.weather = Weather(weather_api_token)
         cities = get_data_from_file("cities.json")
         self.cities = cities['cities']
@@ -78,7 +78,8 @@ class Bot(QThread):
             if not self.logged_in():
                 self.user_selection()
             else:
-                print("You are already logged in as " + self.current_user.name + ". You have to log out first to access " + command + ". Do you want to log out now?")
+                print("You are already logged in as " + self.current_user.name + ".")
+                print("You have to log out first to access " + command + ". Do you want to log out now?")
                 command = speech()
                 if any(command in w for w in ["yes", "yep", "aye", "yo", "logout", "log out"]):
                     self.logout()
@@ -116,7 +117,9 @@ class Bot(QThread):
     def user_selection(self):
         in_user_selection = True
         while in_user_selection:
-            print("User Selection\nDo you want to:\n1.log in?\n2.Create a new user?\n3.See the user list?\n4.Delete a user?\n5.Go back?")
+            print("User Selection\nDo you want to:\n1.log in?")
+            print("2.Create a new user?\n3.See the user list?")
+            print("4.Delete a user?\n5.Go back?")
 
             command = speech()
 
@@ -124,7 +127,7 @@ class Bot(QThread):
             if any(command in w for w in ["one", "login", "log in"]):
                 in_user_selection = False
                 self.login()
-            elif any(command in w for w in ["two", "new user", "user", "new", "create new user", "create", "create new"]):
+            elif command in ["two", "new user", "user", "new", "create new user", "create", "create new"]:
                 in_user_selection = False
                 self.create_new_user()
             elif any(command in w for w in ["three", "see", "list", "user list", "see the user list"]):
@@ -149,7 +152,7 @@ class Bot(QThread):
 
         else:
             correct = False
-            while correct == False:
+            while not correct:
                 print("New User creation. Please spell your name for me. To cancel say 'abort' or 'cancel'.")
                 command = speech()
                 print("You said '" + command + "'. Is that correct?")
@@ -157,15 +160,15 @@ class Bot(QThread):
                     return
                 approval_command = speech()
                 if any(approval_command in w for w in APPROVAL_LIST):
-                    print("You said "+ approval_command + ".")
+                    print("You said " + approval_command + ".")
                     correct = True
-            #check if 'users.json'-file alrdy exists
+            # check if 'users.json'-file alrdy exists
             if not os.path.isfile("users.json"):
                 f = open("users.json", "w+")
-                user_data = {"users":[]}
+                user_data = {"users": []}
                 dump_data_to_file(user_data, "users.json")
                 f.close()
-            #check if name exists in users.json
+            # check if name exists in users.json
             else:
                 user_data = get_data_from_file("users.json")
                 user_list = user_data['users']
@@ -176,7 +179,7 @@ class Bot(QThread):
             dump_data = get_data_from_file("users.json")
 
             dump_data["users"].append({"name": command, "location": '', "hobbies": []})
-            
+
             dump_data_to_file(dump_data, "users.json")
 
             print("User " + command + " successfully created.")
@@ -224,7 +227,7 @@ class Bot(QThread):
                     self.update_file()
 
     def login(self, user_name=''):
-        if not self.current_user is None:
+        if self.current_user is not None:
             print("You are already logged in as " + self.current_user.name + ". Log out first.")
         else:
             user_list = self.get_user_list()
@@ -243,7 +246,7 @@ class Bot(QThread):
                 else:
                     while(not(self.logged_in())):
                         print("Select your Profile from the following list of users by saying the Name or Number:")
-                        
+
                         count = 1
                         for user in user_list:
                             print(str(count)+"." + user)
@@ -330,7 +333,7 @@ if __name__ == "__main__":
     win.loadFinished.connect(lambda ok: print("finish", ok))
     win.loadProgress.connect(lambda p: print("progress", p))
     win.loadStarted.connect(lambda: print("started"))
-    win.load(QUrl("http://localhost"))
+    win.load(QUrl("http://localhost/forecast/Heidelberg"))
     bot = Bot()
     bot.page_changed.connect(lambda url: print("Url changed", url))
     bot.page_changed.connect(win.load)
