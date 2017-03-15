@@ -44,14 +44,12 @@ class Weather:
         key = 'loc' + city
         if get_cache_entry(key) is not None:
             location_obj = get_cache_entry(key)
-            print("Getting cacheentry for:" + key)
         else:
             location_req_url = self.LOCATION_URL.format(city)
             r = requests.get(location_req_url)
             location_obj = json.loads(r.text)
             dump_data_to_file(location_obj, "location.json")
             set_cache_entry(key, location_obj)
-            print("Setting cacheentry for:" + key)
 
         lat = location_obj['results'][0]['geometry']['location']['lat']
         lng = location_obj['results'][0]['geometry']['location']['lng']

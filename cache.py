@@ -1,7 +1,7 @@
 from werkzeug.contrib.cache import FileSystemCache
 
 
-cache = FileSystemCache('.cache', threshold=10, default_timeout=6000)
+cache = FileSystemCache('.cache', threshold=10, default_timeout=30)
 
 
 def get_cache_entry(key):
