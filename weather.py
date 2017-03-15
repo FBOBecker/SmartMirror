@@ -3,7 +3,7 @@ import requests
 from datetime import datetime
 from util import dump_data_to_file
 from tokens import GOOGLE_MAPS_TOKEN
-
+from cache import *
 
 class Weather:
     LOCATION_URL = "https://maps.googleapis.com/maps/api/geocode/json?address={}&key=" + GOOGLE_MAPS_TOKEN
@@ -18,15 +18,18 @@ class Weather:
         lat = loc_obj['lat']
         lng = loc_obj['lng']
 
-        weather_req_url = self.weather_url.format(lat, lng)
-        r = requests.get(weather_req_url)
-        weather_json = json.loads(r.text)
+        key = 'weather' + city
 
-        print(weather_json.keys())
-        dump_data_to_file(weather_json, "weather.json")
+        if get_cache_entry(key) is not None:
+            weather_json = get_cache_entry(key)
+        else:
+            weather_req_url = self.weather_url.format(lat, lng)
+            r = requests.get(weather_req_url)
+            weather_json = json.loads(r.text)
+            dump_data_to_file(weather_json, "weather.json")
+            set_cache_entry(key, weather_json)
 
         temperature = int(weather_json['currently']['temperature'])
-
         current_forecast = weather_json['currently']['summary']
         hourly_forecast = weather_json['hourly']['summary']
         daily_forecast = weather_json['daily']['summary']
@@ -38,15 +41,19 @@ class Weather:
                 'daily_forecast': daily_forecast}
 
     def get_coordinates(self, city='Berlin'):
-        # get location
-        location_req_url = self.LOCATION_URL.format(city)
-        r = requests.get(location_req_url)
-        location_obj = json.loads(r.text)
-
-        dump_data_to_file(location_obj, "location.json")
+        key = 'loc' + city
+        if get_cache_entry(key) is not None:
+            location_obj = get_cache_entry(key)
+            print("Getting cacheentry for:" + key)
+        else:
+            location_req_url = self.LOCATION_URL.format(city)
+            r = requests.get(location_req_url)
+            location_obj = json.loads(r.text)
+            dump_data_to_file(location_obj, "location.json")
+            set_cache_entry(key, location_obj)
+            print("Setting cacheentry for:" + key)
 
         lat = location_obj['results'][0]['geometry']['location']['lat']
         lng = location_obj['results'][0]['geometry']['location']['lng']
-        print(lat, lng)
 
         return {'lat': lat, 'lng': lng}

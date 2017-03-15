@@ -26,8 +26,6 @@ def forecast(city):
     icon = weather_obj['icon']
     wind_speed = weather_obj['windSpeed']
 
-    print("It currently is " + temperature + " degrees celcius.")
-
     return render_template("home.html", temp=temperature, wind=wind_speed, city=city)
 
 
