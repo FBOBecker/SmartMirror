@@ -72,7 +72,7 @@ class Bot(QThread):
         if any(command in w for w in ["hello", "hi"]):
             print("Greetings")
             self.page_changed.emit(QUrl("http://localhost/forecast"))
-        elif any(command in w for w in ["shutdown bot", "shutdown system", "shut down", "shutdown"]):
+        elif command in ["shutdown bot", "shutdown system", "shut down", "shutdown"]:
             print("Goodbye!")
         elif any(command in w for w in ["login", "I want to login", "new account", "user", "new user"]):
             if not self.logged_in():
@@ -84,19 +84,55 @@ class Bot(QThread):
                 if any(command in w for w in ["yes", "yep", "aye", "yo", "logout", "log out"]):
                     self.logout()
                     self.user_selection()
-        elif any(command in w for w in ["hobbies", "show hobbies", "hobby"]):
-            if(self.logged_in()):
-                self.hobby_selection()
-            else:
                 print("Log in to view your hobbies.")
         elif any(command in w for w in ["who am I", "Who"]):
             self.who_am_i()
-        elif any(command in w for w in self.cities):
+        elif command in self.cities:
             self.page_changed.emit(QUrl("http://localhost/forecast/" + command))
         elif command == "weather":
             self.page_changed.emit(QUrl("http://localhost/weather"))
+        elif command in ['what can I do', 'what can you do for me']:
+            self.use_options()
+        elif command in ['set hometown', 'hometown']:
+            if self.logged_in():
+                self.set_user_location();
+            else:
+                print("Log in first.")
         else:
             print(command + "\nI do not understand that command yet, sorry.")
+
+    def set_user_location(self):
+        """
+        TODO: if old_hometown == new_hometown -> print something and exit
+        """
+        if self.current_user.hometown != '':
+            print("Your current hometown is '" + self.current_user.hometown +"'")
+        loop = True
+        while(loop):
+            print('Tell me which town to set as your hometown.')
+            
+            command = speech()
+
+            if command in self.cities:
+                self.current_user.hometown = command
+                data = get_data_from_file("users.json")
+                for user in data['users']:
+                    if user["name"] == self.current_user.name:
+                        user['hometown'] = self.current_user.hometown
+                dump_data_to_file(data, "users.json")
+
+                print("Set your hometown to '" + self.current_user.hometown + "'.")
+                loop = False
+            elif command == 'stop':
+                loop = False
+            else:
+                print("I may not know that city. Try again. To go back say 'stop'.")
+
+    def use_options(self):
+        if self.logged_in():
+            print("You can ask me for the weather, set your hometown, manage your hobbies or log out.")
+        else:
+            self.user_selection()
 
     def hobby_selection(self):
         print("Do you want to:\n1.View your hobbies?\n2.Add hobbies?\n3.Remove hobbies?\n4.Go back?")
@@ -148,7 +184,7 @@ class Bot(QThread):
         if not new_user == '':
             self.current_user = User()
             self.current_user.name = new_user
-            self.current_user.location = ''
+            self.current_user.hometown = ''
 
         else:
             correct = False
@@ -178,7 +214,7 @@ class Bot(QThread):
 
             dump_data = get_data_from_file("users.json")
 
-            dump_data["users"].append({"name": command, "location": '', "hobbies": []})
+            dump_data["users"].append({"name": command, "hometown": '', "hobbies": []})
 
             dump_data_to_file(dump_data, "users.json")
 
@@ -241,7 +277,7 @@ class Bot(QThread):
                         if user['name'] == user_name:
                             self.current_user = User()
                             self.current_user.name = user['name']
-                            self.current_user.location = user['location']
+                            self.current_user.hometown = user['hometown']
                             self.current_user.hobbies = user['hobbies']
                 else:
                     while(not(self.logged_in())):
@@ -276,7 +312,7 @@ class Bot(QThread):
 
                             for user in data['users']:
                                 if user['name'] == self.current_user.name:
-                                    self.current_user.location = user['location']
+                                    self.current_user.hometown = user['hometown']
                                     self.current_user.hobbies = user['hobbies']
 
                             dump_data = {"name": self.current_user.name}

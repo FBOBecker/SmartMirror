@@ -15,7 +15,7 @@ DECLINE_LIST = ["no", "nope"]
 class User:
     def __init__(self, *args, **kwargs):
         self.name = kwargs.get('name', '')
-        self.location = kwargs.get('location', '')
+        self.hometown = kwargs.get('hometown', '')
         self.hobbies = kwargs.get('hobbies', [])
 
     @property
@@ -132,3 +132,6 @@ class User:
                 else:
                     print("What you said didn't match any of your hobbies."
                           "Try again; to cancel use a word of the CANCEL_LIST.")
+
+    def set_hometown(self, location):
+        self.hometown = location
