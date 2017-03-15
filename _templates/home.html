@@ -1,10 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-    <h1>In {{city}} hat es {{temp}}°C und eine Windstärke von {{wind}}.</h1>
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+    <style>
+
+      #time-box {
+    border: 3px dashed #F00;
+    padding: 10px;
+        position: absolute;
+        right: 1em;
+        top: 0;
+        width: auto;
+     }
+
+    </style>
+<div id="time-box">{{ now }}</div>
+<div class='weather'>
+    Wetter für <big>{{ city }}</big>
+    
+    <p class="temperature" style="font-size: 80px">{{ temperature }}°C</p>
+
+        {% for key, value in weather%}
+            <h1>{{key}}: {{value}}</h1>
+        {% endfor %}
+</div>
+{% endblock %}

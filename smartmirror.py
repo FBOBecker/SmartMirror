@@ -95,7 +95,7 @@ class Bot(QThread):
             self.use_options()
         elif command in ['set hometown', 'hometown']:
             if self.logged_in():
-                self.set_user_location();
+                self.set_user_location()
             else:
                 print("Log in first.")
         else:
@@ -106,11 +106,11 @@ class Bot(QThread):
         TODO: if old_hometown == new_hometown -> print something and exit
         """
         if self.current_user.hometown != '':
-            print("Your current hometown is '" + self.current_user.hometown +"'")
+            print("Your current hometown is '" + self.current_user.hometown + "'")
         loop = True
         while(loop):
             print('Tell me which town to set as your hometown.')
-            
+
             command = speech()
 
             if command in self.cities:
