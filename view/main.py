@@ -4,8 +4,14 @@ from datetime import datetime
 from flask import Blueprint, abort, flash, redirect, render_template, request
 from weather import Weather
 from util import *
+from datetime import datetime
 main = Blueprint("main", __name__)
 weather_api_token = tokens.WEATHER_API_TOKEN
+
+
+@main.context_processor
+def inject_now():
+    return {'now': datetime.utcnow()}
 
 
 @main.route("/")
@@ -26,7 +32,9 @@ def forecast(city):
     icon = weather_obj['icon']
     wind_speed = weather_obj['windSpeed']
 
-    return render_template("home.html", temp=temperature, wind=wind_speed, city=city)
+    weather_params = [('City',city), ('Temperature',temperature), ('Windspeed',wind_speed), ('Icon',icon)]
+
+    return render_template("home.html", city=city, temperature=temperature, weather=weather_params)
 
 
 @main.route("/weather")

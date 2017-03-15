@@ -5,6 +5,7 @@ from util import dump_data_to_file
 from tokens import GOOGLE_MAPS_TOKEN
 from cache import *
 
+
 class Weather:
     LOCATION_URL = "https://maps.googleapis.com/maps/api/geocode/json?address={}&key=" + GOOGLE_MAPS_TOKEN
     WEATHER_URL = "https://api.darksky.net/forecast/{}/{{}},{{}}"
