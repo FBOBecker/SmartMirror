@@ -40,16 +40,17 @@ class Bot(QThread):
         """
         Bot running
         """
-
         data = get_data_from_file("last_use.json")
         if data is not None:
             if 'name' in data:
                 self.login(data['name'])
                 print("Welcome back, " + self.current_user.name + "!")
-                self.current_user.show_hobbies()
         else:
-            with open("last_use.json", "w+"):
-                pass
+            f = open("last_use.json", "w+")
+            f.close()
+            self.page_changed.emit(QUrl("http://localhost/user_management"))
+            self.user_management()
+
         while True:
             sleep(0.1)
             if(self.logged_in()):
@@ -76,14 +77,16 @@ class Bot(QThread):
             print("Goodbye!")
         elif any(command in w for w in ["login", "I want to login", "new account", "user", "new user"]):
             if not self.logged_in():
-                self.user_selection()
+                self.page_changed.emit(QUrl("http://localhost/user_management"))
+                self.user_management()
             else:
                 print("You are already logged in as " + self.current_user.name + ".")
                 print("You have to log out first to access " + command + ". Do you want to log out now?")
                 command = speech()
                 if any(command in w for w in ["yes", "yep", "aye", "yo", "logout", "log out"]):
                     self.logout()
-                    self.user_selection()
+                    self.page_changed.emit(QUrl("http://localhost/user_management"))
+                    self.user_management()
                 print("Log in to view your hobbies.")
         elif any(command in w for w in ["who am I", "Who"]):
             self.who_am_i()
@@ -95,9 +98,10 @@ class Bot(QThread):
             self.use_options()
         elif command in ['set hometown', 'hometown']:
             if self.logged_in():
+                self.page_changed.emit(QUrl("http://localhost/" + self.current_user.name + "/set_location"))
                 self.set_user_location()
             else:
-                print("Log in first.")
+                self.page_changed.emit(QUrl("http://localhost/user_management"))
         else:
             print(command + "\nI do not understand that command yet, sorry.")
 
@@ -120,6 +124,7 @@ class Bot(QThread):
                     if user["name"] == self.current_user.name:
                         user['hometown'] = self.current_user.hometown
                 dump_data_to_file(data, "users.json")
+                self.page_changed.emit(QUrl("http://localhost/" + self.current_user.name + "/home"))
 
                 print("Set your hometown to '" + self.current_user.hometown + "'.")
                 loop = False
@@ -132,7 +137,7 @@ class Bot(QThread):
         if self.logged_in():
             print("You can ask me for the weather, set your hometown, manage your hobbies or log out.")
         else:
-            self.user_selection()
+            self.user_management()
 
     def hobby_selection(self):
         print("Do you want to:\n1.View your hobbies?\n2.Add hobbies?\n3.Remove hobbies?\n4.Go back?")
@@ -150,21 +155,16 @@ class Bot(QThread):
         elif any(command in w for w in ["four", "back", "go back"]):
             return
 
-    def user_selection(self):
-        in_user_selection = True
-        while in_user_selection:
-            print("User Selection\nDo you want to:\n1.log in?")
-            print("2.Create a new user?\n3.See the user list?")
-            print("4.Delete a user?\n5.Go back?")
-
+    def user_management(self):
+        in_user_management = True
+        while in_user_management:
             command = speech()
-
             print("You said:" + command)
             if any(command in w for w in ["one", "login", "log in"]):
-                in_user_selection = False
+                in_user_management = False
                 self.login()
             elif command in ["two", "new user", "user", "new", "create new user", "create", "create new"]:
-                in_user_selection = False
+                in_user_management = False
                 self.create_new_user()
             elif any(command in w for w in ["three", "see", "list", "user list", "see the user list"]):
                 self.show_users()
@@ -172,7 +172,7 @@ class Bot(QThread):
             elif any(command in w for w in ["four", "remove", "remove user", "delete", "delete user"]):
                 self.delete_user()
             elif any(command in w for w in ["five", "back", "go back"]):
-                in_user_selection = False
+                in_user_management = False
                 self.run()
 
     """
@@ -282,11 +282,7 @@ class Bot(QThread):
                 else:
                     while(not(self.logged_in())):
                         print("Select your Profile from the following list of users by saying the Name or Number:")
-
-                        count = 1
-                        for user in user_list:
-                            print(str(count)+"." + user)
-                            count += 1
+                        self.show_users()
 
                         command = speech()
                         print("You said " + command)
@@ -321,11 +317,13 @@ class Bot(QThread):
                             print("Hello " + self.current_user.name + "!\nYou are logged in now!")
 
                 self.update_file()
+                self.page_changed.emit(QUrl("http://localhost/" + self.current_user.name + "/home"))
 
     def logout(self):
         if(self.logged_in()):
             self.current_user = None
             self.update_file()
+            self.page_changed.emit(QUrl("http://localhost/user_management"))
         else:
             print("You are not logged in.")
 
@@ -343,6 +341,7 @@ class Bot(QThread):
 
     def show_users(self):
         print(self.get_user_list())
+        self.page_changed.emit(QUrl("http://localhost/show_users"))
 
     def get_user_list(self):
         if os.path.isfile("users.json"):
@@ -363,20 +362,17 @@ class Bot(QThread):
                 os.remove("last_use.json")
 
 if __name__ == "__main__":
-    mode = 'speech'
     if(len(sys.argv) > 1):
         if(sys.argv[1] == 'write'):
             from speech import write
             speech = write
 
-    print('mode:' + mode)
     app = QApplication([])
     win = QWebView()
     win.show()
     win.loadFinished.connect(lambda ok: print("finish", ok))
     win.loadProgress.connect(lambda p: print("progress", p))
     win.loadStarted.connect(lambda: print("started"))
-    win.load(QUrl("http://localhost/forecast/Heidelberg"))
     bot = Bot()
     bot.page_changed.connect(lambda url: print("Url changed", url))
     bot.page_changed.connect(win.load)

@@ -14,10 +14,27 @@ def inject_now():
     return {'now': datetime.utcnow()}
 
 
-@main.route("/")
-def index():
-    return "Hallo!"
+@main.route("/<string:user_name>/home")
+def home(user_name):
+    return render_template("home.html", user_name=user_name)
 
+
+@main.route("/<string:user_name>/set_location")
+def set_location(user_name):
+    return render_template("set_location.html", user_name=user_name)
+
+
+@main.route("/user_management")
+def user_management():
+    user_options = ["1.Log in", "2.Create a new user", "3.See the user list", "4.Delete a user", "5.Go back"]
+
+    return render_template("user_management.html", user_options=user_options)
+
+
+@main.route("/show_users")
+def show_users():
+
+    return render_template("show_users.html")
 
 @main.route("/forecast/<string:city>")
 def forecast(city):
@@ -34,7 +51,7 @@ def forecast(city):
 
     weather_params = [('City',city), ('Temperature',temperature), ('Windspeed',wind_speed), ('Icon',icon)]
 
-    return render_template("home.html", city=city, temperature=temperature, weather=weather_params)
+    return render_template("forecast.html", city=city, temperature=temperature, weather=weather_params)
 
 
 @main.route("/weather")

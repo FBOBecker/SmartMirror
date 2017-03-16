@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+{{ super() }}
+<div class='weather'>
+    Wetter für <big>{{ city }}</big>
+    
+    <p class="temperature" style="font-size: 80px">{{ temperature }}°C</p>
+
+        {% for key, value in weather%}
+            <h1>{{key}}: {{value}}</h1>
+        {% endfor %}
+</div>
+{% endblock %}
