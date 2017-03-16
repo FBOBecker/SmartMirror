@@ -17,6 +17,7 @@ except ImportError:
 import os
 import json
 import sys
+from requests import post, Request
 from datetime import datetime
 from user import *
 from util import *
@@ -317,7 +318,7 @@ class Bot(QThread):
                             print("Hello " + self.current_user.name + "!\nYou are logged in now!")
 
                 self.update_file()
-                self.page_changed.emit(QUrl("http://localhost/" + self.current_user.name + "/home"))
+                self.change_url_and_send_data("http://localhost/" + self.current_user.name + "/home", {'name': self.current_user.name})
 
     def logout(self):
         if(self.logged_in()):
@@ -360,6 +361,13 @@ class Bot(QThread):
         else:
             if(os.path.isfile("last_use.json")):
                 os.remove("last_use.json")
+
+    def change_url_and_send_data(self, url, data):
+        headers = {'content-type': 'application/json'}
+        r = post(url, data=json.dumps(data), headers=headers)
+        print(r, r.text)
+        self.page_changed.emit(QUrl(url))
+        r = post(url, data=json.dumps(data), headers=headers)
 
 if __name__ == "__main__":
     if(len(sys.argv) > 1):

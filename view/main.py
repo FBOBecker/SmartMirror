@@ -14,9 +14,14 @@ def inject_now():
     return {'now': datetime.utcnow()}
 
 
-@main.route("/<string:user_name>/home")
+@main.route("/<string:user_name>/home", methods=['GET', 'POST'])
 def home(user_name):
-    return render_template("home.html", user_name=user_name)
+    data = request.method
+    if not request.data:
+        print("NODATA")
+    # data = request.get_json()
+    # print(type(data))
+    return render_template("home.html", user_name=user_name, data=data)
 
 
 @main.route("/<string:user_name>/set_location")
