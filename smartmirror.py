@@ -1,10 +1,5 @@
 from time import sleep
 
-from PyQt5.QtWidgets import QApplication
-try:
-    from PyQt5.QtWebKitWidgets import QWebView
-except ImportError:
-    from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
 from PyQt5.QtCore import QUrl, QThread, pyqtSignal
 
 try:
@@ -21,7 +16,7 @@ from datetime import datetime
 from user import *
 from util import *
 from weather import Weather
-from speech import speech
+from speech import write
 
 weather_api_token = tokens.WEATHER_API_TOKEN
 
@@ -29,12 +24,13 @@ weather_api_token = tokens.WEATHER_API_TOKEN
 class Bot(QThread):
     page_changed = pyqtSignal(QUrl)
 
-    def __init__(self):
+    def __init__(self, mode=write):
         super().__init__()
         self.current_user = None
         self.weather = Weather(weather_api_token)
         cities = get_data_from_file("cities.json")
         self.cities = cities['cities']
+        self.speech = mode
 
     def run(self):
         """
@@ -58,7 +54,7 @@ class Bot(QThread):
             print("You are in main menu.\nAsk me what I can do.")
             self.update_file()
             try:
-                command = speech()
+                command = self.speech()
             except Exception as e:
                 print(e)
                 continue
@@ -82,7 +78,7 @@ class Bot(QThread):
             else:
                 print("You are already logged in as " + self.current_user.name + ".")
                 print("You have to log out first to access " + command + ". Do you want to log out now?")
-                command = speech()
+                command = self.speech()
                 if any(command in w for w in ["yes", "yep", "aye", "yo", "logout", "log out"]):
                     self.logout()
                     self.page_changed.emit(QUrl("http://localhost/user_management"))
@@ -115,7 +111,7 @@ class Bot(QThread):
         while(loop):
             print('Tell me which town to set as your hometown.')
 
-            command = speech()
+            command = self.speech()
 
             if command in self.cities:
                 self.current_user.hometown = command
@@ -142,7 +138,7 @@ class Bot(QThread):
     def hobby_selection(self):
         print("Do you want to:\n1.View your hobbies?\n2.Add hobbies?\n3.Remove hobbies?\n4.Go back?")
 
-        command = speech()
+        command = self.speech()
 
         print("You said:" + command)
 
@@ -158,7 +154,7 @@ class Bot(QThread):
     def user_management(self):
         in_user_management = True
         while in_user_management:
-            command = speech()
+            command = self.speech()
             print("You said:" + command)
             if any(command in w for w in ["one", "login", "log in"]):
                 in_user_management = False
@@ -190,11 +186,11 @@ class Bot(QThread):
             correct = False
             while not correct:
                 print("New User creation. Please spell your name for me. To cancel say 'abort' or 'cancel'.")
-                command = speech()
+                command = self.speech()
                 print("You said '" + command + "'. Is that correct?")
                 if any(command in w for w in CANCEL_LIST):
                     return
-                approval_command = speech()
+                approval_command = self.speech()
                 if any(approval_command in w for w in APPROVAL_LIST):
                     print("You said " + approval_command + ".")
                     correct = True
@@ -228,7 +224,7 @@ class Bot(QThread):
         if user_list is None or len(user_list) == 0:
             print("There are no users yet.")
         else:
-            command = speech()
+            command = self.speech()
             print("You said " + command)
 
             command_list = []
@@ -252,7 +248,7 @@ class Bot(QThread):
 
                 item_index = next(index for (index, user) in enumerate(user_list) if user['name'] == user_to_delete)
 
-                approval_command = speech()
+                approval_command = self.speech()
 
                 if any(approval_command in w for w in APPROVAL_LIST):
                     del user_list[item_index]
@@ -284,7 +280,7 @@ class Bot(QThread):
                         print("Select your Profile from the following list of users by saying the Name or Number:")
                         self.show_users()
 
-                        command = speech()
+                        command = self.speech()
                         print("You said " + command)
 
                         command_list = []
@@ -360,21 +356,3 @@ class Bot(QThread):
         else:
             if(os.path.isfile("last_use.json")):
                 os.remove("last_use.json")
-
-if __name__ == "__main__":
-    if(len(sys.argv) > 1):
-        if(sys.argv[1] == 'write'):
-            from speech import write
-            speech = write
-
-    app = QApplication([])
-    win = QWebView()
-    win.show()
-    win.loadFinished.connect(lambda ok: print("finish", ok))
-    win.loadProgress.connect(lambda p: print("progress", p))
-    win.loadStarted.connect(lambda: print("started"))
-    bot = Bot()
-    bot.page_changed.connect(lambda url: print("Url changed", url))
-    bot.page_changed.connect(win.load)
-    bot.start()
-    app.exec_()
