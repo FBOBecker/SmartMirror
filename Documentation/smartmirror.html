@@ -19,19 +19,34 @@
         <a id="close_sidebar" onclick="closeNav()">&times;</a>
         <a href="#">Der Spiegel</a>
         <a href="#">Team</a>
-        <a href="#">Verlauf</a>
-        <a href="#">Code</a>
+        <a href="#">Projektverlauf</a>
+        <a href="#">Hardware</a>
+        <a href="#">Software</a>
+        <a href="#">Erfahrungen</a>
+        <a href="#header" style="text-decoration: none" class="to_top">&uarr; To top</a>
     </div>
 
     <!-- Add all page content inside this div if you want the side nav to push page content to the right (not used if you only want the sidenav to sit on top of the page -->
     <div id="main">
-        <div id="top">
+        <hr>
+        <div id="header">
+            <h1>Raspberry Pi Smart Mirror</h1>
+        </div>
+        <hr>
 
+        <div id="content">
+                    <p>Content</p>
+                        <hr>
         </div>
-        <div id=content>
-            <p>Content</p>
-        </div>
+        <div id="footer">
+       <a href="#header" class="footer">To top&uarr;</a>
+       <a href="https://github.com/FBOBecker/SmartMirror" class="footer">GitHub</a>
+
     </div>
+
+    </div>
+
+
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="../static/js/jquery.min.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
@@ -44,10 +59,8 @@ function openNav() {
     sidebar.style.width = "200px";
     sidebar.style.background = "#111";
     var open_sidebar = document.getElementById("open_sidebar")
-    alert(open_sidebar.style.display)
     open_sidebar.style.display = "none";
     document.getElementById("close_sidebar").style.display = "block";
-    alert(open_sidebar.style.display)
     document.getElementById("main").style.marginLeft = "200px";
     var a_tags_in_sidebar = sidebar.children
     for ( var i = 0; i < a_tags_in_sidebar.length; i++)

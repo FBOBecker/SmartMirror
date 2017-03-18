@@ -1,7 +1,7 @@
 body, html {
     background-color: #DEDEDE !important;
     overflow-x: hidden;
-    overflow-y: auto; 
+    height:100%;
 }
 
 /* The side navigation menu */
@@ -14,21 +14,27 @@ body, html {
     left: 0;
     background-color: #111; /* Black*/
     overflow-x: hidden; /* Disable horizontal scroll */
+    overflow-y: hidden;
     padding-top: 60px; /* Place content 60px from the top */
     transition: 1.2s; /* 0.5 second transition effect to slide in the sidenav */
-    
+
+    word-wrap: none;
     border-style: solid;
     border-width: 0 1px 0 0;
     border-color: #111;
 }
 
+h1 {
+    font-size: 66px !important;
+}
+
 /* The navigation menu links */
 .sidenav a {
-    padding: 8px 8px 8px 32px;
+    padding: 8px 8px 8px 8px;
     text-decoration: none;
     font-size: 25px;
     color: #818181;
-    display: block;
+    display: none;
     transition: 0.5s
 }
 
@@ -41,11 +47,11 @@ body, html {
 
 /* Position and style the close button (top right corner) */
 .sidenav #close_sidebar {
+    display: none;
     position: absolute;
     top: 0;
-    right: 25px;
+    right: 0px;
     font-size: 36px;
-    margin-left: 50px;
     cursor:pointer;
 }
 
@@ -70,8 +76,9 @@ body, html {
 /* Style page content - use this if you want to push the page content to the right when you open the side navigation */
 #main {
     transition: margin-left 0.78s ease-in-out;
-    padding: 10px 20px 0 20px;
+    padding: 0px 20px 0 20px;
     margin-left: 30px;
+    margin-bottom: 50px;
 }
 
 /* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
@@ -80,12 +87,21 @@ body, html {
     .sidenav a {font-size: 18px;}
 }
 
-
-#top {
-    height:300px;
-    background-color: black;
+#header {
+    font-size: 60px;
+    font-weight: bold;
 }
 
+#footer{
+    position:fixed;
+    height:50px;
+    background-color:#929292;
+    bottom:0px;
+    left:0px;
+    right:0px;
+    margin-bottom:0px;
+    margin-left: 30px;
+}
 .vertical_text {
     position: absolute;
     top:120px;
@@ -96,4 +112,28 @@ body, html {
 .rotate {
     -webkit-transform: rotate(270deg);
     -webkit-transform-origin: left top;
+}
+
+.footer {
+    position: relative;
+    margin: 10px 20px;
+    color:rgb(51,51,51);
+    float: left;
+}
+
+.footer:first-child {
+    margin-left: 100px !important;
+
+}
+
+#footer a:hover {
+    text-decoration: none;
+    cursor: pointer;
+}
+
+
+.to_top {
+    position: fixed;
+    bottom: 0px;
+    left: 0px;
 }
