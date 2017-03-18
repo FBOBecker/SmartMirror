@@ -16,6 +16,7 @@ from datetime import datetime
 from user import *
 from util import *
 from weather import Weather
+from speech import write
 
 weather_api_token = tokens.WEATHER_API_TOKEN
 
@@ -23,7 +24,7 @@ weather_api_token = tokens.WEATHER_API_TOKEN
 class Bot(QThread):
     page_changed = pyqtSignal(QUrl)
 
-    def __init__(self, mode):
+    def __init__(self, mode=write):
         super().__init__()
         self.current_user = None
         self.weather = Weather(weather_api_token)
