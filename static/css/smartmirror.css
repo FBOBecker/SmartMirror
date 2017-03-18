@@ -2,6 +2,9 @@ body, html {
     background-color: #DEDEDE !important;
     overflow-x: hidden;
     height:100%;
+    padding: 0;
+    margin:0;
+    font-family: "Helvetica Neue";
 }
 
 /* The side navigation menu */
@@ -24,8 +27,34 @@ body, html {
     border-color: #111;
 }
 
+p {
+    margin:0 0 10px;
+    line-height: 35px;
+}
+
 h1 {
-    font-size: 66px !important;
+    font-size: 66px;
+    color:rgb(51,51,51);
+}
+
+h2 
+{
+    font-size: 30px;
+}
+
+h3 {
+    font-size: 24px;
+}
+
+h1, h2, h3 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 500;
+    line-height: 1.1;
+    color:rgb(51,51,51);
 }
 
 /* The navigation menu links */
@@ -42,7 +71,8 @@ h1 {
 .sidenav a:not(:first-child):hover{
     color: #f1f1f1;
     font-size: 30px;
-    transition: 1.2s;
+    transition: 0.9s ease-out;
+    text-decoration: underline;
 }
 
 /* Position and style the close button (top right corner) */
@@ -78,7 +108,7 @@ h1 {
     transition: margin-left 0.78s ease-in-out;
     padding: 0px 20px 0 20px;
     margin-left: 30px;
-    margin-bottom: 50px;
+    margin-bottom: 60px;
 }
 
 /* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
@@ -90,6 +120,32 @@ h1 {
 #header {
     font-size: 60px;
     font-weight: bold;
+}
+
+.nav {
+    float: left;
+    min-width: 200px;
+    border: 1px dotted black;
+}
+
+.nav ul {
+    list-style-type: decimal; 
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.nav ul li {
+    height:20px;
+}
+
+.nav ul li a{
+    color: #337ab7;
+    text-decoration: none;
+}
+
+.content {
+    clear: left;
+    padding-top: 10px;
 }
 
 #footer{
@@ -123,12 +179,11 @@ h1 {
 
 .footer:first-child {
     margin-left: 100px !important;
-
 }
 
-#footer a:hover {
+
+#footer a {
     text-decoration: none;
-    cursor: pointer;
 }
 
 
@@ -136,4 +191,18 @@ h1 {
     position: fixed;
     bottom: 0px;
     left: 0px;
+}
+
+.to_top:hover {
+     text-decoration: none !important;
+     font-size: 25px !important;
+}
+
+
+
+hr {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    border: 0;
+    border-top: 1px solid #eee;
 }
