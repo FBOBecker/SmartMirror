@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Smart Mirror</title>
     <link rel="stylesheet" type="text/css" href="../static/css/base.css">
-    <link rel="stylesheet" type="text/css" href="../static/css/sidebar.css">
-    <!-- Bootstrap -->
-    <link href="../static/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="../static/css/smartmirror.css">
+    <!-- Bootstrap --
+    <link rel="stylesheet" type="text/css" href="../static/css/bootstrap.min.css"> -->
 
 </head>
 <body>
@@ -17,13 +17,13 @@
             <p class="vertical_text rotate" onmouseover="openNav()">Sidebar</p>
         </a>
         <a id="close_sidebar" onclick="closeNav()">&times;</a>
-        <a href="#">Der Spiegel</a>
+        <a href="#">The Mirror</a>
         <a href="#">Team</a>
-        <a href="#">Projektverlauf</a>
+        <a href="#">Project Progress</a>
         <a href="#">Hardware</a>
         <a href="#">Software</a>
-        <a href="#">Erfahrungen</a>
-        <a href="#header" style="text-decoration: none" class="to_top">&uarr; To top</a>
+        <a href="#">Experiences</a>
+        <a href="#header" class="to_top">&uarr; To top</a>
     </div>
 
     <!-- Add all page content inside this div if you want the side nav to push page content to the right (not used if you only want the sidenav to sit on top of the page -->
@@ -35,9 +35,50 @@
         <hr>
 
         <div id="content">
-                    <p>Content</p>
-                        <hr>
+        <h2>Table of contents</h2>
+        <div class="nav">
+            <ul>
+                <li>
+                    <a href="#">Heading1</a>
+                </li>
+                <li>
+                    <a href="#">Heading2</a>
+                </li>
+                <li>
+                    <a href="#">Heading3</a>
+                </li>
+                <li>
+                    <a href="#">Heading4</a>
+                </li>
+                <li>
+                    <a href="#">Heading5</a>
+                </li>
+            </ul>
         </div>
+        <div class="content">
+            <h3>Heading1</h3>
+            <div class="sub_content">
+                <p>Content</p>
+            </div>
+            <h3>Heading2</h3>
+            <div class="sub_content">
+                <p>Content</p>
+            </div>
+            <h3>Heading3</h3>
+            <div class="sub_content">
+                <p>Content</p>
+            </div>
+            <h3>Heading4</h3>
+            <div class="sub_content">
+                <p>Content</p>
+            </div>
+            <h3>Heading5</h3>
+            <div class="sub_content">
+                <p>Content</p>
+            </div>            
+        </div>
+        </div>
+        <hr>
         <div id="footer">
        <a href="#header" class="footer">To top&uarr;</a>
        <a href="https://github.com/FBOBecker/SmartMirror" class="footer">GitHub</a>
