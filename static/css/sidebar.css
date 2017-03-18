@@ -7,7 +7,7 @@ body, html {
 /* The side navigation menu */
 .sidenav {
     height: 100%; /* 100% Full-height */
-    width: 200px; /* 0 width - change this with JavaScript */
+    width: 30px; /* 0 width - change this with JavaScript */
     position: fixed; /* Stay in place */
     z-index: 1; /* Stay on top */
     top: 0;
@@ -15,7 +15,7 @@ body, html {
     background-color: #111; /* Black*/
     overflow-x: hidden; /* Disable horizontal scroll */
     padding-top: 60px; /* Place content 60px from the top */
-    transition: 1s; /* 0.5 second transition effect to slide in the sidenav */
+    transition: 1.2s; /* 0.5 second transition effect to slide in the sidenav */
     
     border-style: solid;
     border-width: 0 1px 0 0;
@@ -33,33 +33,45 @@ body, html {
 }
 
 /* When you mouse over the navigation links, change their color */
-.sidenav a:hover{
+.sidenav a:not(:first-child):hover{
     color: #f1f1f1;
-    font-size: 35px;
-    transition: 1.2s
+    font-size: 30px;
+    transition: 1.2s;
 }
 
 /* Position and style the close button (top right corner) */
-.sidenav #close_btn {
+.sidenav #close_sidebar {
     position: absolute;
     top: 0;
     right: 25px;
     font-size: 36px;
     margin-left: 50px;
+    cursor:pointer;
 }
 
-.sidenav #open_btn {
-    display: none;
+.sidenav #open_sidebar {
+    display: block;
     position: absolute;
-    top: 0;
-    right: -4px;
+    top: 0px;
+    left: 0px;
+    width: 30px;
+    height: 100%;
+    padding: 0;
+    transition: 1.2s;
+    background-color: #DEDEDE;
+    color: #222;
+}
+
+.sidenav #open_sidebar:hover {
+    cursor: pointer;
+    text-decoration: none;
 }
 
 /* Style page content - use this if you want to push the page content to the right when you open the side navigation */
 #main {
-    transition: margin-left 1.1s;
+    transition: margin-left 0.78s ease-in-out;
     padding: 10px 20px 0 20px;
-    margin-left: 200px;
+    margin-left: 30px;
 }
 
 /* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
@@ -71,5 +83,17 @@ body, html {
 
 #top {
     height:300px;
-    background-color: red;
+    background-color: black;
+}
+
+.vertical_text {
+    position: absolute;
+    top:120px;
+    left:-5px;
+    padding: 0;
+}
+
+.rotate {
+    -webkit-transform: rotate(270deg);
+    -webkit-transform-origin: left top;
 }
