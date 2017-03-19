@@ -53,4 +53,5 @@ if __name__ == "__main__":
     try:
         bot.run()
     finally:
+        bot.update_file()
         bot.close_browser()

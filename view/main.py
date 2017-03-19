@@ -14,9 +14,10 @@ def inject_now():
     return {'now': datetime.utcnow()}
 
 
-@main.route("/<string:user_name>/home", methods=["GET","POST"])
-def home(user_name):
-    return render_template("home.html", user_name=user_name)
+@main.route("/<string:user_name>/home/<string:city>/<string:response>", methods=["GET","POST"])
+def home(user_name, city, response):
+    weather_params = get_weather(city)
+    return render_template("forecast.html", user_name=user_name, weather=weather_params)
 
 
 @main.route("/<string:user_name>/set_location")
@@ -38,6 +39,22 @@ def show_users():
 
 @main.route("/forecast/<string:city>", methods=["GET","POST"])
 def forecast(city):
+    weather_params = get_weather(city)
+
+    return render_template("forecast.html", city=city, weather=weather_params)
+
+
+@main.route("/weather")
+def weather():
+    return "GOOD FUCKING JOB!"
+
+
+@main.route("/simple_response/<string:response>")
+def simple_response(response):
+    return render_template("simple_response.html", response=response)
+
+
+def get_weather(city):
     weather = Weather(weather_api_token)
     cities = get_data_from_file("cities.json")
     cities = cities['cities']
@@ -49,11 +66,4 @@ def forecast(city):
     icon = weather_obj['icon']
     wind_speed = weather_obj['windSpeed']
 
-    weather_params = [('City',city), ('Temperature',temperature), ('Windspeed',wind_speed), ('Icon',icon)]
-
-    return render_template("forecast.html", city=city, temperature=temperature, weather=weather_params)
-
-
-@main.route("/weather")
-def weather():
-    return "GOOD FUCKING JOB!"
+    return {'City': city, 'Temperature':temperature, 'Windspeed': wind_speed, 'Icon':icon}

@@ -27,7 +27,11 @@ wit_token = tokens.WIT_ACCESS_TOKEN
 
 
 class Bot():
-    WIT_URL = 'https://api.wit.ai/message?v=20170319&q={}'
+    URL_WIT = 'https://api.wit.ai/message?v=20170319&q={}'
+    URL_USER_HOME = "http://localhost/{}/home/{}/{}"
+    URL_USER_MANAGEMENT = "http://localhost/user_management"
+    URL_FORECAST = "http://localhost/forecast/{}"
+    URL_SIMPLE_RESPONSE = "http://localhost/simple_response/{}"
 
     def __init__(self, mode=write):
         super().__init__()
@@ -38,10 +42,6 @@ class Bot():
         self.speech = mode
         self.driver = webdriver.Chrome()
 
-    def run(self):
-        """
-        Bot running
-        """
         data = get_data_from_file("last_use.json")
         if data is not None:
             if 'name' in data:
@@ -50,15 +50,15 @@ class Bot():
         else:
             f = open("last_use.json", "w+")
             f.close()
-            self.driver.get("http://localhost/user_management")
+            self.change_url(self.URL_USER_MANAGEMENT)
             self.user_management()
 
+    def run(self):
+        """
+        Bot running
+        """
         while True:
             sleep(0.1)
-            if(self.logged_in()):
-                "Hello " + self.current_user.name + "!"
-            print("You are in main menu.\nAsk me what I can do.")
-            self.update_file()
             try:
                 command = self.speech()
             except Exception as e:
@@ -69,24 +69,29 @@ class Bot():
 
     def action(self, command):
 
+        r = None
         try:
-            r = requests.get(self.WIT_URL.format(command), 
+            r = requests.get(self.URL_WIT.format(command), 
                 headers={"Authorization": wit_token})
-            print(r.text)
-            json_resp = json.loads(r.text)
-            entities = None
-            intents = None
-            location = None
-            if 'entities' in json_resp and 'intent' and 'location' in json_resp['entities']:
-                entities = json_resp['entities']
-                intent = entities['intent'][0]['value']
-                location = entities['location'][0]['value']
-            if intent == 'weather':
-                self.driver.get("http://localhost/forecast/" + location)
-
         except Exception as e:
             print("REQUEST FAILED")
 
+        if r is not None:
+            print(r.text)
+            json_resp = json.loads(r.text)
+            intent = self.get_intent(json_resp)
+
+            if intent is not None:
+                if intent == 'weather':
+                    location = self.get_location(json_resp)
+                    if location is not  None:
+                        self.change_url(self.URL_FORECAST.format(location))
+                elif intent == 'logout':
+                    self.logout()
+                elif intent == 'login':
+                    self.login()
+            else:
+                self.change_url(self.URL_SIMPLE_RESPONSE.format('I do not understand the intend of your statement.'))
         """
         Choose next action depending on input
         :param command:
@@ -94,12 +99,11 @@ class Bot():
         """
         if any(command in w for w in ["hello", "hi"]):
             print("Greetings")
-            self.driver.get("http://localhost/forecast")
+            self.change_url(self.URL_FORECAST.format('Heidelberg'))
         elif command in ["shutdown bot", "shutdown system", "shut down", "shutdown"]:
             print("Goodbye!")
         elif any(command in w for w in ["login", "I want to login", "new account", "user", "new user"]):
             if not self.logged_in():
-                self.driver.get("http://localhost/user_management")
                 self.user_management()
             else:
                 print("You are already logged in as " + self.current_user.name + ".")
@@ -107,23 +111,21 @@ class Bot():
                 command = self.speech()
                 if any(command in w for w in ["yes", "yep", "aye", "yo", "logout", "log out"]):
                     self.logout()
-                    self.driver.get("http://localhost/user_management")
-                    self.user_management()
                 print("Log in to view your hobbies.")
         elif any(command in w for w in ["who am I", "Who"]):
             self.who_am_i()
         elif command in self.cities:
-            self.driver.get("http://localhost/forecast/" + command)
+            self.change_url("http://localhost/forecast/" + command)
         elif command == "weather":
-            self.driver.get("http://localhost/weather")
+            self.change_url("http://localhost/weather")
         elif command in ['what can I do', 'what can you do for me']:
             self.use_options()
         elif command in ['set hometown', 'hometown']:
             if self.logged_in():
-                self.driver.getself("http://localhost/" + self.current_user.name + "/set_location")
+                self.driver.get("http://localhost/" + self.current_user.name + "/set_location")
                 self.set_user_location()
             else:
-                self.driver.get("http://localhost/user_management")
+                self.user_management()
         else:
             print(command + "\nI do not understand that command yet, sorry.")
 
@@ -146,7 +148,7 @@ class Bot():
                     if user["name"] == self.current_user.name:
                         user['hometown'] = self.current_user.hometown
                 dump_data_to_file(data, "users.json")
-                self.driver.get("http://localhost/" + self.current_user.name + "/home")
+                self.change_url("http://localhost/" + self.current_user.name + "/home")
 
                 print("Set your hometown to '" + self.current_user.hometown + "'.")
                 loop = False
@@ -178,24 +180,11 @@ class Bot():
             return
 
     def user_management(self):
-        in_user_management = True
-        while in_user_management:
-            command = self.speech()
-            print("You said:" + command)
-            if any(command in w for w in ["one", "login", "log in"]):
-                in_user_management = False
-                self.login()
-            elif command in ["two", "new user", "user", "new", "create new user", "create", "create new"]:
-                in_user_management = False
-                self.create_new_user()
-            elif any(command in w for w in ["three", "see", "list", "user list", "see the user list"]):
-                self.show_users()
-                pass
-            elif any(command in w for w in ["four", "remove", "remove user", "delete", "delete user"]):
-                self.delete_user()
-            elif any(command in w for w in ["five", "back", "go back"]):
-                in_user_management = False
-                self.run()
+        if(self.logged_in()):
+            self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, "You are already logged in."))
+            return
+        else:
+            self.change_url(self.URL_USER_MANAGEMENT)
 
     """
     creates a new user in "./users.json"
@@ -282,7 +271,7 @@ class Bot():
                     user_data['users'] = user_list
 
                     dump_data_to_file(user_data, "users.json")
-                    self.update_file()
+                    
 
     def login(self, user_name=''):
         if self.current_user is not None:
@@ -338,15 +327,14 @@ class Bot():
                             dump_data_to_file(dump_data, "last_use.json")
                             print("Hello " + self.current_user.name + "!\nYou are logged in now!")
 
-                self.update_file()
-                url = "http://localhost/" + self.current_user.name + "/home"
-                self.driver.get(url)
+                
+                self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, None))
 
     def logout(self):
         if(self.logged_in()):
             self.current_user = None
-            self.update_file()
-            self.driver.get("http://localhost/user_management")
+            
+            self.user_management()
         else:
             print("You are not logged in.")
 
@@ -364,7 +352,7 @@ class Bot():
 
     def show_users(self):
         print(self.get_user_list())
-        self.driver.get("http://localhost/show_users")
+        self.change_url("http://localhost/show_users")
 
     def get_user_list(self):
         if os.path.isfile("users.json"):
@@ -383,6 +371,25 @@ class Bot():
         else:
             if(os.path.isfile("last_use.json")):
                 os.remove("last_use.json")
+
+    def get_intent(self, json_wit):
+        intent = None
+        if 'entities' in json_wit and 'intent' in json_wit['entities']:
+            entities = json_wit['entities']
+            intent = entities['intent'][0]['value']
+        return intent
+
+    def get_location(self, json_wit):
+        location = None
+        if 'entities' in json_wit and 'location' in json_wit['entities']:
+            entities = json_wit['entities']
+            location = entities['location'][0]['value']
+        return location
+
+
+
+    def change_url(self, url):
+        self.driver.get(url)
 
     def close_browser(self):
         self.driver.close()
