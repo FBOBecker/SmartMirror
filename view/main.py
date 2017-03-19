@@ -14,7 +14,7 @@ def inject_now():
     return {'now': datetime.utcnow()}
 
 
-@main.route("/<string:user_name>/home")
+@main.route("/<string:user_name>/home", methods=["GET","POST"])
 def home(user_name):
     return render_template("home.html", user_name=user_name)
 
@@ -36,7 +36,7 @@ def show_users():
 
     return render_template("show_users.html")
 
-@main.route("/forecast/<string:city>")
+@main.route("/forecast/<string:city>", methods=["GET","POST"])
 def forecast(city):
     weather = Weather(weather_api_token)
     cities = get_data_from_file("cities.json")

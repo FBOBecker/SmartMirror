@@ -5,12 +5,6 @@ from smartmirror import Bot
 
 from _thread import start_new_thread
 
-from PyQt5.QtWidgets import QApplication
-try:
-    from PyQt5.QtWebKitWidgets import QWebView
-except ImportError:
-    from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
-
 
 def start_server(a=None, b=None):
     create_app().run(debug=True, use_reloader=False, host="0.0.0.0", port=80)
@@ -35,12 +29,6 @@ if __name__ == "__main__":
 
     server_thread = start_new_thread(start_server, (None, None))
 
-    app = QApplication([])
-    win = QWebView()
-    win.show()
-    win.loadFinished.connect(lambda ok: print("finish", ok))
-    win.loadProgress.connect(lambda p: print("progress", p))
-    win.loadStarted.connect(lambda: print("started"))
     if(len(argv) == 1):
         bot = Bot()
     else:
@@ -54,8 +42,5 @@ if __name__ == "__main__":
         else:
             help = "Unknown argument '" + argv[1] + "'."
             exit_and_print_help(help)
-
-    bot.page_changed.connect(lambda url: print("Url changed", url))
-    bot.page_changed.connect(win.load)
-    bot.start()
-    app.exec_()
+    bot.run()
+    

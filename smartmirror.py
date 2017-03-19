@@ -1,7 +1,5 @@
 from time import sleep
 
-from PyQt5.QtCore import QUrl, QThread, pyqtSignal
-
 try:
     import tokens
 except ImportError:
@@ -18,11 +16,12 @@ from util import *
 from weather import Weather
 from speech import write
 
+from webbrowser import register, open as open_webbrowser
+
 weather_api_token = tokens.WEATHER_API_TOKEN
 
 
-class Bot(QThread):
-    page_changed = pyqtSignal(QUrl)
+class Bot():
 
     def __init__(self, mode=write):
         super().__init__()
@@ -31,6 +30,7 @@ class Bot(QThread):
         cities = get_data_from_file("cities.json")
         self.cities = cities['cities']
         self.speech = mode
+        register('web', None)
 
     def run(self):
         """
@@ -44,7 +44,7 @@ class Bot(QThread):
         else:
             f = open("last_use.json", "w+")
             f.close()
-            self.page_changed.emit(QUrl("http://localhost/user_management"))
+            open_webbrowser("http://localhost/user_management")
             self.user_management()
 
         while True:
@@ -68,12 +68,12 @@ class Bot(QThread):
         """
         if any(command in w for w in ["hello", "hi"]):
             print("Greetings")
-            self.page_changed.emit(QUrl("http://localhost/forecast"))
+            open_webbrowser("http://localhost/forecast")
         elif command in ["shutdown bot", "shutdown system", "shut down", "shutdown"]:
             print("Goodbye!")
         elif any(command in w for w in ["login", "I want to login", "new account", "user", "new user"]):
             if not self.logged_in():
-                self.page_changed.emit(QUrl("http://localhost/user_management"))
+                open_webbrowser("http://localhost/user_management")
                 self.user_management()
             else:
                 print("You are already logged in as " + self.current_user.name + ".")
@@ -81,23 +81,23 @@ class Bot(QThread):
                 command = self.speech()
                 if any(command in w for w in ["yes", "yep", "aye", "yo", "logout", "log out"]):
                     self.logout()
-                    self.page_changed.emit(QUrl("http://localhost/user_management"))
+                    open_webbrowser("http://localhost/user_management")
                     self.user_management()
                 print("Log in to view your hobbies.")
         elif any(command in w for w in ["who am I", "Who"]):
             self.who_am_i()
         elif command in self.cities:
-            self.page_changed.emit(QUrl("http://localhost/forecast/" + command))
+            open_webbrowser("http://localhost/forecast/" + command)
         elif command == "weather":
-            self.page_changed.emit(QUrl("http://localhost/weather"))
+            open_webbrowser("http://localhost/weather")
         elif command in ['what can I do', 'what can you do for me']:
             self.use_options()
         elif command in ['set hometown', 'hometown']:
             if self.logged_in():
-                self.page_changed.emit(QUrl("http://localhost/" + self.current_user.name + "/set_location"))
+                open_webbrowserself("http://localhost/" + self.current_user.name + "/set_location")
                 self.set_user_location()
             else:
-                self.page_changed.emit(QUrl("http://localhost/user_management"))
+                open_webbrowser("http://localhost/user_management")
         else:
             print(command + "\nI do not understand that command yet, sorry.")
 
@@ -120,7 +120,7 @@ class Bot(QThread):
                     if user["name"] == self.current_user.name:
                         user['hometown'] = self.current_user.hometown
                 dump_data_to_file(data, "users.json")
-                self.page_changed.emit(QUrl("http://localhost/" + self.current_user.name + "/home"))
+                open_webbrowser("http://localhost/" + self.current_user.name + "/home")
 
                 print("Set your hometown to '" + self.current_user.hometown + "'.")
                 loop = False
@@ -313,13 +313,14 @@ class Bot(QThread):
                             print("Hello " + self.current_user.name + "!\nYou are logged in now!")
 
                 self.update_file()
-                self.page_changed.emit(QUrl("http://localhost/" + self.current_user.name + "/home"))
+                url = "http://localhost/" + self.current_user.name + "/home"
+                open_webbrowser(url)
 
     def logout(self):
         if(self.logged_in()):
             self.current_user = None
             self.update_file()
-            self.page_changed.emit(QUrl("http://localhost/user_management"))
+            open_webbrowser("http://localhost/user_management")
         else:
             print("You are not logged in.")
 
@@ -337,7 +338,7 @@ class Bot(QThread):
 
     def show_users(self):
         print(self.get_user_list())
-        self.page_changed.emit(QUrl("http://localhost/show_users"))
+        open_webbrowser("http://localhost/show_users")
 
     def get_user_list(self):
         if os.path.isfile("users.json"):
