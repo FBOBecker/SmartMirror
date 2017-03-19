@@ -7,6 +7,12 @@ Hello, {{ user_name }}!
 What can I do you for? ;)
 </div>
 {% endif %}
+{% if response %}
+<div style="margin-left:200px">
+{{ response }}
+</div>
+{% endif %}
+
 <div class='weather'>
     Wetter für <big>{{ weather['City'] }}</big>
     

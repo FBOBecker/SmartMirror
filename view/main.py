@@ -16,8 +16,10 @@ def inject_now():
 
 @main.route("/<string:user_name>/home/<string:city>/<string:response>", methods=["GET","POST"])
 def home(user_name, city, response):
+    if response == 'None':
+        response = None
     weather_params = get_weather(city)
-    return render_template("forecast.html", user_name=user_name, weather=weather_params)
+    return render_template("forecast.html", user_name=user_name, weather=weather_params, response=response)
 
 
 @main.route("/<string:user_name>/set_location")

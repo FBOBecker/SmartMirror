@@ -74,92 +74,84 @@ class Bot():
             r = requests.get(self.URL_WIT.format(command), 
                 headers={"Authorization": wit_token})
         except Exception as e:
+            # did not get the request from wit.ai
             print("REQUEST FAILED")
+            self.change_url(self.URL_SIMPLE_RESPONSE.format('Request to wit.ai did not work.'))
+            return
 
         if r is not None:
             print(r.text)
             json_resp = json.loads(r.text)
+            if 'error' in json_resp:
+                print('Authentication with wit.ai failed.')
+                self.change_url(self.URL_SIMPLE_RESPONSE.format('Authentication with wit.ai failed.'))
+                return
             intent = self.get_intent(json_resp)
+            location = self.get_location(json_resp)
+            print("LOCATION: ", location)
 
             if intent is not None:
                 if intent == 'weather':
                     location = self.get_location(json_resp)
                     if location is not  None:
                         self.change_url(self.URL_FORECAST.format(location))
+                    else:
+                        self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, 'From where do you want to know the weather?'))
+                        location = self.speech()
+                        if location in self.cities:
+                            self.change_url(self.URL_USER_HOME.format(self.current_user.name, location, 'Here you go!'))
+                        else:
+                            self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, 'I do not know of this place, sorry!'))
+                elif intent == 'hometown':
+                    self.set_user_location()
                 elif intent == 'logout':
                     self.logout()
                 elif intent == 'login':
                     self.login()
+                elif intent == 'greeting':
+                    self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, 'Hello yourself'))
+                elif intent == 'options':
+                    self.use_options()
+                elif intent == 'shutdown':
+                    exit()
+            elif location is not None:
+                    self.change_url(self.URL_USER_HOME.format(self.current_user.name, location, 'Le Wetter!'))
             else:
-                self.change_url(self.URL_SIMPLE_RESPONSE.format('I do not understand the intend of your statement.'))
-        """
-        Choose next action depending on input
-        :param command:
-        :return:
-        """
-        if any(command in w for w in ["hello", "hi"]):
-            print("Greetings")
-            self.change_url(self.URL_FORECAST.format('Heidelberg'))
-        elif command in ["shutdown bot", "shutdown system", "shut down", "shutdown"]:
-            print("Goodbye!")
-        elif any(command in w for w in ["login", "I want to login", "new account", "user", "new user"]):
-            if not self.logged_in():
-                self.user_management()
-            else:
-                print("You are already logged in as " + self.current_user.name + ".")
-                print("You have to log out first to access " + command + ". Do you want to log out now?")
-                command = self.speech()
-                if any(command in w for w in ["yes", "yep", "aye", "yo", "logout", "log out"]):
-                    self.logout()
-                print("Log in to view your hobbies.")
-        elif any(command in w for w in ["who am I", "Who"]):
-            self.who_am_i()
-        elif command in self.cities:
-            self.change_url("http://localhost/forecast/" + command)
-        elif command == "weather":
-            self.change_url("http://localhost/weather")
-        elif command in ['what can I do', 'what can you do for me']:
-            self.use_options()
-        elif command in ['set hometown', 'hometown']:
-            if self.logged_in():
-                self.driver.get("http://localhost/" + self.current_user.name + "/set_location")
-                self.set_user_location()
-            else:
-                self.user_management()
-        else:
-            print(command + "\nI do not understand that command yet, sorry.")
-
+                if(self.logged_in()):
+                    self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, 'I do not understand the intend of your statement.'))
+                else:
+                    self.change_url(self.URL_SIMPLE_RESPONSE.format('I do not understand the intend of your statement.'))
+        
     def set_user_location(self):
         """
         TODO: if old_hometown == new_hometown -> print something and exit
         """
         if self.current_user.hometown != '':
             print("Your current hometown is '" + self.current_user.hometown + "'")
-        loop = True
-        while(loop):
-            print('Tell me which town to set as your hometown.')
+        self.change_url(self.URL_SIMPLE_RESPONSE.format("Tell me which town to set as your hometown."))
+        print('Tell me which town to set as your hometown.')
 
-            command = self.speech()
+        command = self.speech()
 
-            if command in self.cities:
-                self.current_user.hometown = command
-                data = get_data_from_file("users.json")
-                for user in data['users']:
-                    if user["name"] == self.current_user.name:
-                        user['hometown'] = self.current_user.hometown
-                dump_data_to_file(data, "users.json")
-                self.change_url("http://localhost/" + self.current_user.name + "/home")
+        if command in self.cities:
+            self.current_user.hometown = command
+            data = get_data_from_file("users.json")
+            for user in data['users']:
+                if user["name"] == self.current_user.name:
+                    user['hometown'] = self.current_user.hometown
+            dump_data_to_file(data, "users.json")
+            sleep(1)
+            self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, ('Hometown successfully set to {} !').format(self.current_user.hometown)))
 
-                print("Set your hometown to '" + self.current_user.hometown + "'.")
-                loop = False
-            elif command == 'stop':
-                loop = False
-            else:
-                print("I may not know that city. Try again. To go back say 'stop'.")
+            print("Set your hometown to '" + self.current_user.hometown + "'.")
+        else:
+            self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, "I may not know that city."))
+            print("I may not know that city.")
 
     def use_options(self):
         if self.logged_in():
-            print("You can ask me for the weather, set your hometown, manage your hobbies or log out.")
+            self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, 
+                "You can ask me for the weather, set your hometown, manage your hobbies or log out."))
         else:
             self.user_management()
 
@@ -328,7 +320,7 @@ class Bot():
                             print("Hello " + self.current_user.name + "!\nYou are logged in now!")
 
                 
-                self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, None))
+                self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, 'None'))
 
     def logout(self):
         if(self.logged_in()):
@@ -385,8 +377,6 @@ class Bot():
             entities = json_wit['entities']
             location = entities['location'][0]['value']
         return location
-
-
 
     def change_url(self, url):
         self.driver.get(url)
