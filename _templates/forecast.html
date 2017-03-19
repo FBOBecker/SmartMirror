@@ -1,13 +1,25 @@
 {% extends "base.html" %}
 {% block content %}
 {{ super() }}
-<div class='weather'>
-    Wetter für <big>{{ city }}</big>
-    
-    <p class="temperature" style="font-size: 80px">{{ temperature }}°C</p>
+{% if user_name %}
+<div>
+Hello, {{ user_name }}!
+What can I do you for? ;)
+</div>
+{% endif %}
+{% if response %}
+<div style="margin-left:200px">
+{{ response }}
+</div>
+{% endif %}
 
-        {% for key, value in weather%}
-            <h1>{{key}}: {{value}}</h1>
+<div class='weather'>
+    Wetter für <big>{{ weather['City'] }}</big>
+    
+    <p class="temperature" style="font-size: 80px">{{ weather['Temperature'] }}°C</p>
+
+        {% for key in weather%}
+            <h1>{{ key }}: {{ weather[key] }}</h1>
         {% endfor %}
 </div>
 {% endblock %}

@@ -1,6 +1,8 @@
 from json import load, dump
-from json.decoder import JSONDecodeError
-
+try:
+    from json.decoder import JSONDecodeError
+except(ImportError):
+    from simplejson.decoder import JSONDecodeError
 
 number_conversion = {
     1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five',
@@ -19,7 +21,7 @@ def get_data_from_file(path):
     try:
         with open(path) as f:
             return load(f)
-    except (IOError, JSONDecodeError):
+    except (IOError, JSONDecodeError, ValueError):
         return None
 
 

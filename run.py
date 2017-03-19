@@ -1,15 +1,10 @@
-from sys import argv
+import os
+from sys import argv, executable
 
 from server import create_app
 from smartmirror import Bot
 
 from _thread import start_new_thread
-
-from PyQt5.QtWidgets import QApplication
-try:
-    from PyQt5.QtWebKitWidgets import QWebView
-except ImportError:
-    from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
 
 
 def start_server(a=None, b=None):
@@ -30,17 +25,18 @@ def help_mode():
 
 if __name__ == "__main__":
 
+    euid = os.geteuid()
+    if euid != 0:
+        print("Script not started as root. Running sudo..")
+        args = ['sudo', executable] + argv + [os.environ]
+        os.execlpe('sudo', *args)
+    print('Running. Your euid is', euid)
+
     if("--h" in argv):
         help_mode()
 
     server_thread = start_new_thread(start_server, (None, None))
 
-    app = QApplication([])
-    win = QWebView()
-    win.show()
-    win.loadFinished.connect(lambda ok: print("finish", ok))
-    win.loadProgress.connect(lambda p: print("progress", p))
-    win.loadStarted.connect(lambda: print("started"))
     if(len(argv) == 1):
         bot = Bot()
     else:
@@ -54,8 +50,8 @@ if __name__ == "__main__":
         else:
             help = "Unknown argument '" + argv[1] + "'."
             exit_and_print_help(help)
-
-    bot.page_changed.connect(lambda url: print("Url changed", url))
-    bot.page_changed.connect(win.load)
-    bot.start()
-    app.exec_()
+    try:
+        bot.run()
+    finally:
+        bot.update_file()
+        bot.close_browser()

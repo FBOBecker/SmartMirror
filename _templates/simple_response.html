@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+{{ super() }}
+{% if user_name %}
+<div>
+Hello, {{ user_name }}!
+</div>
+{% endif %}
+    {{ response }}
+</div>
+{% endblock %}

@@ -1,7 +1,5 @@
 from time import sleep
 
-from PyQt5.QtCore import QUrl, QThread, pyqtSignal
-
 try:
     import tokens
 except ImportError:
@@ -18,11 +16,22 @@ from util import *
 from weather import Weather
 from speech import write
 
+import requests
+
+from wit import wit
+
+from selenium import webdriver
+
 weather_api_token = tokens.WEATHER_API_TOKEN
+wit_token = tokens.WIT_ACCESS_TOKEN
 
 
-class Bot(QThread):
-    page_changed = pyqtSignal(QUrl)
+class Bot():
+    URL_WIT = 'https://api.wit.ai/message?v=20170319&q={}'
+    URL_USER_HOME = "http://localhost/{}/home/{}/{}"
+    URL_USER_MANAGEMENT = "http://localhost/user_management"
+    URL_FORECAST = "http://localhost/forecast/{}"
+    URL_SIMPLE_RESPONSE = "http://localhost/simple_response/{}"
 
     def __init__(self, mode=write):
         super().__init__()
@@ -31,11 +40,8 @@ class Bot(QThread):
         cities = get_data_from_file("cities.json")
         self.cities = cities['cities']
         self.speech = mode
+        self.driver = webdriver.Chrome()
 
-    def run(self):
-        """
-        Bot running
-        """
         data = get_data_from_file("last_use.json")
         if data is not None:
             if 'name' in data:
@@ -44,94 +50,108 @@ class Bot(QThread):
         else:
             f = open("last_use.json", "w+")
             f.close()
-            self.page_changed.emit(QUrl("http://localhost/user_management"))
+            self.change_url(self.URL_USER_MANAGEMENT)
             self.user_management()
 
+    def run(self):
+        """
+        Bot running
+        """
         while True:
             sleep(0.1)
-            if(self.logged_in()):
-                "Hello " + self.current_user.name + "!"
-            print("You are in main menu.\nAsk me what I can do.")
-            self.update_file()
             try:
                 command = self.speech()
             except Exception as e:
                 print(e)
                 continue
+
             self.action(command)
 
     def action(self, command):
-        """
-        Choose next action depending on input
-        :param command:
-        :return:
-        """
-        if any(command in w for w in ["hello", "hi"]):
-            print("Greetings")
-            self.page_changed.emit(QUrl("http://localhost/forecast"))
-        elif command in ["shutdown bot", "shutdown system", "shut down", "shutdown"]:
-            print("Goodbye!")
-        elif any(command in w for w in ["login", "I want to login", "new account", "user", "new user"]):
-            if not self.logged_in():
-                self.page_changed.emit(QUrl("http://localhost/user_management"))
-                self.user_management()
-            else:
-                print("You are already logged in as " + self.current_user.name + ".")
-                print("You have to log out first to access " + command + ". Do you want to log out now?")
-                command = self.speech()
-                if any(command in w for w in ["yes", "yep", "aye", "yo", "logout", "log out"]):
-                    self.logout()
-                    self.page_changed.emit(QUrl("http://localhost/user_management"))
-                    self.user_management()
-                print("Log in to view your hobbies.")
-        elif any(command in w for w in ["who am I", "Who"]):
-            self.who_am_i()
-        elif command in self.cities:
-            self.page_changed.emit(QUrl("http://localhost/forecast/" + command))
-        elif command == "weather":
-            self.page_changed.emit(QUrl("http://localhost/weather"))
-        elif command in ['what can I do', 'what can you do for me']:
-            self.use_options()
-        elif command in ['set hometown', 'hometown']:
-            if self.logged_in():
-                self.page_changed.emit(QUrl("http://localhost/" + self.current_user.name + "/set_location"))
-                self.set_user_location()
-            else:
-                self.page_changed.emit(QUrl("http://localhost/user_management"))
-        else:
-            print(command + "\nI do not understand that command yet, sorry.")
 
+        r = None
+        try:
+            r = requests.get(self.URL_WIT.format(command), 
+                headers={"Authorization": wit_token})
+        except Exception as e:
+            # did not get the request from wit.ai
+            print("REQUEST FAILED")
+            self.change_url(self.URL_SIMPLE_RESPONSE.format('Request to wit.ai did not work.'))
+            return
+
+        if r is not None:
+            print(r.text)
+            json_resp = json.loads(r.text)
+            if 'error' in json_resp:
+                print('Authentication with wit.ai failed.')
+                self.change_url(self.URL_SIMPLE_RESPONSE.format('Authentication with wit.ai failed.'))
+                return
+            intent = self.get_intent(json_resp)
+            location = self.get_location(json_resp)
+            print("LOCATION: ", location)
+
+            if intent is not None:
+                if intent == 'weather':
+                    location = self.get_location(json_resp)
+                    if location is not  None:
+                        self.change_url(self.URL_FORECAST.format(location))
+                    else:
+                        self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, 'From where do you want to know the weather?'))
+                        location = self.speech()
+                        if location in self.cities:
+                            self.change_url(self.URL_USER_HOME.format(self.current_user.name, location, 'Here you go!'))
+                        else:
+                            self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, 'I do not know of this place, sorry!'))
+                elif intent == 'hometown':
+                    self.set_user_location()
+                elif intent == 'logout':
+                    self.logout()
+                elif intent == 'login':
+                    self.login()
+                elif intent == 'greeting':
+                    self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, 'Hello yourself'))
+                elif intent == 'options':
+                    self.use_options()
+                elif intent == 'shutdown':
+                    exit()
+            elif location is not None:
+                    self.change_url(self.URL_USER_HOME.format(self.current_user.name, location, 'Le Wetter!'))
+            else:
+                if(self.logged_in()):
+                    self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, 'I do not understand the intend of your statement.'))
+                else:
+                    self.change_url(self.URL_SIMPLE_RESPONSE.format('I do not understand the intend of your statement.'))
+        
     def set_user_location(self):
         """
         TODO: if old_hometown == new_hometown -> print something and exit
         """
         if self.current_user.hometown != '':
             print("Your current hometown is '" + self.current_user.hometown + "'")
-        loop = True
-        while(loop):
-            print('Tell me which town to set as your hometown.')
+        self.change_url(self.URL_SIMPLE_RESPONSE.format("Tell me which town to set as your hometown."))
+        print('Tell me which town to set as your hometown.')
 
-            command = self.speech()
+        command = self.speech()
 
-            if command in self.cities:
-                self.current_user.hometown = command
-                data = get_data_from_file("users.json")
-                for user in data['users']:
-                    if user["name"] == self.current_user.name:
-                        user['hometown'] = self.current_user.hometown
-                dump_data_to_file(data, "users.json")
-                self.page_changed.emit(QUrl("http://localhost/" + self.current_user.name + "/home"))
+        if command in self.cities:
+            self.current_user.hometown = command
+            data = get_data_from_file("users.json")
+            for user in data['users']:
+                if user["name"] == self.current_user.name:
+                    user['hometown'] = self.current_user.hometown
+            dump_data_to_file(data, "users.json")
+            sleep(1)
+            self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, ('Hometown successfully set to {} !').format(self.current_user.hometown)))
 
-                print("Set your hometown to '" + self.current_user.hometown + "'.")
-                loop = False
-            elif command == 'stop':
-                loop = False
-            else:
-                print("I may not know that city. Try again. To go back say 'stop'.")
+            print("Set your hometown to '" + self.current_user.hometown + "'.")
+        else:
+            self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, "I may not know that city."))
+            print("I may not know that city.")
 
     def use_options(self):
         if self.logged_in():
-            print("You can ask me for the weather, set your hometown, manage your hobbies or log out.")
+            self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, 
+                "You can ask me for the weather, set your hometown, manage your hobbies or log out."))
         else:
             self.user_management()
 
@@ -152,24 +172,11 @@ class Bot(QThread):
             return
 
     def user_management(self):
-        in_user_management = True
-        while in_user_management:
-            command = self.speech()
-            print("You said:" + command)
-            if any(command in w for w in ["one", "login", "log in"]):
-                in_user_management = False
-                self.login()
-            elif command in ["two", "new user", "user", "new", "create new user", "create", "create new"]:
-                in_user_management = False
-                self.create_new_user()
-            elif any(command in w for w in ["three", "see", "list", "user list", "see the user list"]):
-                self.show_users()
-                pass
-            elif any(command in w for w in ["four", "remove", "remove user", "delete", "delete user"]):
-                self.delete_user()
-            elif any(command in w for w in ["five", "back", "go back"]):
-                in_user_management = False
-                self.run()
+        if(self.logged_in()):
+            self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, "You are already logged in."))
+            return
+        else:
+            self.change_url(self.URL_USER_MANAGEMENT)
 
     """
     creates a new user in "./users.json"
@@ -256,7 +263,7 @@ class Bot(QThread):
                     user_data['users'] = user_list
 
                     dump_data_to_file(user_data, "users.json")
-                    self.update_file()
+                    
 
     def login(self, user_name=''):
         if self.current_user is not None:
@@ -312,14 +319,14 @@ class Bot(QThread):
                             dump_data_to_file(dump_data, "last_use.json")
                             print("Hello " + self.current_user.name + "!\nYou are logged in now!")
 
-                self.update_file()
-                self.page_changed.emit(QUrl("http://localhost/" + self.current_user.name + "/home"))
+                
+                self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, 'None'))
 
     def logout(self):
         if(self.logged_in()):
             self.current_user = None
-            self.update_file()
-            self.page_changed.emit(QUrl("http://localhost/user_management"))
+            
+            self.user_management()
         else:
             print("You are not logged in.")
 
@@ -337,7 +344,7 @@ class Bot(QThread):
 
     def show_users(self):
         print(self.get_user_list())
-        self.page_changed.emit(QUrl("http://localhost/show_users"))
+        self.change_url("http://localhost/show_users")
 
     def get_user_list(self):
         if os.path.isfile("users.json"):
@@ -356,3 +363,23 @@ class Bot(QThread):
         else:
             if(os.path.isfile("last_use.json")):
                 os.remove("last_use.json")
+
+    def get_intent(self, json_wit):
+        intent = None
+        if 'entities' in json_wit and 'intent' in json_wit['entities']:
+            entities = json_wit['entities']
+            intent = entities['intent'][0]['value']
+        return intent
+
+    def get_location(self, json_wit):
+        location = None
+        if 'entities' in json_wit and 'location' in json_wit['entities']:
+            entities = json_wit['entities']
+            location = entities['location'][0]['value']
+        return location
+
+    def change_url(self, url):
+        self.driver.get(url)
+
+    def close_browser(self):
+        self.driver.close()
