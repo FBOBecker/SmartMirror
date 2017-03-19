@@ -1,4 +1,9 @@
+#black {
 
+    width:100px;
+    height: 100px;
+    background-color: #111;
+}
 
 .temperature {
   font-size: 80px;

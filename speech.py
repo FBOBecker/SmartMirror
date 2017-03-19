@@ -7,7 +7,9 @@ def speech():
     with sr.Microphone() as source:
         print("Listening...")
         audio = r.listen(source)
+        print("i listened")
     try:
+        print("letting google do its magic")
         msg = r.recognize_google(audio)
     except sr.UnknownValueError:
         msg = "Unknown Value Error"

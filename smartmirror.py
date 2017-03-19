@@ -30,7 +30,7 @@ class Bot():
         cities = get_data_from_file("cities.json")
         self.cities = cities['cities']
         self.speech = mode
-        self.driver = webdriver.Firefox()
+        self.driver = webdriver.Chrome()
 
     def run(self):
         """
