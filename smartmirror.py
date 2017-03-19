@@ -65,17 +65,28 @@ class Bot():
                 print(e)
                 continue
 
-            try:
-                r = requests.get(self.WIT_URL.format(command), 
-                    headers={"Authorization": wit_token})
-                print(r.text)
-            except Exception as e:
-                print("REQUEST FAILED")
-
-
             self.action(command)
 
     def action(self, command):
+
+        try:
+            r = requests.get(self.WIT_URL.format(command), 
+                headers={"Authorization": wit_token})
+            print(r.text)
+            json_resp = json.loads(r.text)
+            entities = None
+            intents = None
+            location = None
+            if 'entities' in json_resp and 'intent' and 'location' in json_resp['entities']:
+                entities = json_resp['entities']
+                intent = entities['intent'][0]['value']
+                location = entities['location'][0]['value']
+            if intent == 'weather':
+                self.driver.get("http://localhost/forecast/" + location)
+
+        except Exception as e:
+            print("REQUEST FAILED")
+
         """
         Choose next action depending on input
         :param command:
