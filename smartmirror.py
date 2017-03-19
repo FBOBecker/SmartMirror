@@ -16,12 +16,18 @@ from util import *
 from weather import Weather
 from speech import write
 
+import requests
+
+from wit import wit
+
 from selenium import webdriver
 
 weather_api_token = tokens.WEATHER_API_TOKEN
+wit_token = tokens.WIT_ACCESS_TOKEN
 
 
 class Bot():
+    WIT_URL = 'https://api.wit.ai/message?v=20170319&q={}'
 
     def __init__(self, mode=write):
         super().__init__()
@@ -58,6 +64,15 @@ class Bot():
             except Exception as e:
                 print(e)
                 continue
+
+            try:
+                r = requests.get(self.WIT_URL.format(command), 
+                    headers={"Authorization": wit_token})
+                print(r.text)
+            except Exception as e:
+                print("REQUEST FAILED")
+
+
             self.action(command)
 
     def action(self, command):
