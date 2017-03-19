@@ -16,7 +16,7 @@ from util import *
 from weather import Weather
 from speech import write
 
-from webbrowser import register, open as open_webbrowser
+from selenium import webdriver
 
 weather_api_token = tokens.WEATHER_API_TOKEN
 
@@ -30,7 +30,7 @@ class Bot():
         cities = get_data_from_file("cities.json")
         self.cities = cities['cities']
         self.speech = mode
-        register('web', None)
+        self.driver = webdriver.Firefox()
 
     def run(self):
         """
@@ -44,7 +44,7 @@ class Bot():
         else:
             f = open("last_use.json", "w+")
             f.close()
-            open_webbrowser("http://localhost/user_management")
+            self.driver.get("http://localhost/user_management")
             self.user_management()
 
         while True:
@@ -68,12 +68,12 @@ class Bot():
         """
         if any(command in w for w in ["hello", "hi"]):
             print("Greetings")
-            open_webbrowser("http://localhost/forecast")
+            self.driver.get("http://localhost/forecast")
         elif command in ["shutdown bot", "shutdown system", "shut down", "shutdown"]:
             print("Goodbye!")
         elif any(command in w for w in ["login", "I want to login", "new account", "user", "new user"]):
             if not self.logged_in():
-                open_webbrowser("http://localhost/user_management")
+                self.driver.get("http://localhost/user_management")
                 self.user_management()
             else:
                 print("You are already logged in as " + self.current_user.name + ".")
@@ -81,23 +81,23 @@ class Bot():
                 command = self.speech()
                 if any(command in w for w in ["yes", "yep", "aye", "yo", "logout", "log out"]):
                     self.logout()
-                    open_webbrowser("http://localhost/user_management")
+                    self.driver.get("http://localhost/user_management")
                     self.user_management()
                 print("Log in to view your hobbies.")
         elif any(command in w for w in ["who am I", "Who"]):
             self.who_am_i()
         elif command in self.cities:
-            open_webbrowser("http://localhost/forecast/" + command)
+            self.driver.get("http://localhost/forecast/" + command)
         elif command == "weather":
-            open_webbrowser("http://localhost/weather")
+            self.driver.get("http://localhost/weather")
         elif command in ['what can I do', 'what can you do for me']:
             self.use_options()
         elif command in ['set hometown', 'hometown']:
             if self.logged_in():
-                open_webbrowserself("http://localhost/" + self.current_user.name + "/set_location")
+                self.driver.getself("http://localhost/" + self.current_user.name + "/set_location")
                 self.set_user_location()
             else:
-                open_webbrowser("http://localhost/user_management")
+                self.driver.get("http://localhost/user_management")
         else:
             print(command + "\nI do not understand that command yet, sorry.")
 
@@ -120,7 +120,7 @@ class Bot():
                     if user["name"] == self.current_user.name:
                         user['hometown'] = self.current_user.hometown
                 dump_data_to_file(data, "users.json")
-                open_webbrowser("http://localhost/" + self.current_user.name + "/home")
+                self.driver.get("http://localhost/" + self.current_user.name + "/home")
 
                 print("Set your hometown to '" + self.current_user.hometown + "'.")
                 loop = False
@@ -314,13 +314,13 @@ class Bot():
 
                 self.update_file()
                 url = "http://localhost/" + self.current_user.name + "/home"
-                open_webbrowser(url)
+                self.driver.get(url)
 
     def logout(self):
         if(self.logged_in()):
             self.current_user = None
             self.update_file()
-            open_webbrowser("http://localhost/user_management")
+            self.driver.get("http://localhost/user_management")
         else:
             print("You are not logged in.")
 
@@ -338,7 +338,7 @@ class Bot():
 
     def show_users(self):
         print(self.get_user_list())
-        open_webbrowser("http://localhost/show_users")
+        self.driver.get("http://localhost/show_users")
 
     def get_user_list(self):
         if os.path.isfile("users.json"):
@@ -357,3 +357,6 @@ class Bot():
         else:
             if(os.path.isfile("last_use.json")):
                 os.remove("last_use.json")
+
+    def close_browser(self):
+        self.driver.close()

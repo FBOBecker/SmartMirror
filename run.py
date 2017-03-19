@@ -42,5 +42,7 @@ if __name__ == "__main__":
         else:
             help = "Unknown argument '" + argv[1] + "'."
             exit_and_print_help(help)
-    bot.run()
-    
+    try:
+        bot.run()
+    finally:
+        bot.close_browser()
