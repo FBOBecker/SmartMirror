@@ -39,23 +39,23 @@
         <div class="nav">
             <ol>
                 <li>
-                    <a href="#">Heading1</a>
+                    <a href="#setup">Setup</a>
                     <ol>
                         <li>
-                            <a href="#">Heading2</a>
+                            <a href="#Precondition and Environment">Precondition and Environment</a>
                         </li>
                         <li>
-                            <a href="#">Heading3</a>
+                            <a href="#viusal output">Visual Output</a>
                         </li>
                         <li>
-                            <a href="#">Heading4</a>
+                            <a href="#apis">APIs</a>
                         </li>
                     </ol>
                 </li>
                 <li>
                     <a href="#">Heading5</a>
                 </li>
-                <li>
+                <li>Nothing
                     <ol>
                     <li><a>Heading6</a>
                     </li>
@@ -64,17 +64,57 @@
             </ol>
         </div>
         <div class="content">
-            <h3>Heading1</h3>
+            <h2 id="setup">Setup</h2>
+            <h3 id="Precondition and Environment">Precondition and Environment</h3>
             <div class="sub_content">
-                <p>Content</p>
+                <p>We used a Raspberry PI 2B.</p>
+                <p>Clone or Download the <a href="https://github.com/FBOBecker/SmartMirror">Git-Repository</a>.</p>
+                <p>
+                    Run ’setup.py’  to install the requirements which will give you the required binaries. FILE MUSS NOCH ERSTELLT WERDEN</p>
             </div>
-            <h3>Heading2</h3>
+            <h3 id="viusal output">Visual Output</h3>
             <div class="sub_content">
-                <p>Content</p>
+                <p>
+                    The visual output will be displayed as html in a Browser(Chrome by default).
+                    We used selenium for this.
+                    To make sure python can evoke a Browser instance we have to pass an executable to it.
+                    These can be downloaded <a href="http://selenium-python.readthedocs.io/installation.html#drivers">here</a>.
+                </p>
+                <p>
+                    You need to specify the path to the directory of your executable.
+                    Setting a Path variable in UNIX
+                    export PATH=%PATH your/path/
+                </p>
             </div>
-            <h3>Heading3</h3>
+            <h3 id="apis">APIs</h3>
             <div class="sub_content">
-                <p>Content</p>
+                <p>
+                    Create accounts for the API-Services we used and replace the placeholders in ‘token.py’
+                    <ul>
+                    <li>
+                    <h4>Wit.Ai API</h4>
+                    <p>
+                        When creating a new app pass the wit.zip-file when asked for it.
+                        See this <a href="https://wit.ai/docs/recipes#copyexportversion-my-app">Tutorial</a>.
+                    </p>
+                    <p>
+                        For the API-Key navigate to ‘Settings’ inside your wit.ai app and “FURHTEREXPLANATIONNEEDED”
+                    </p>
+                    </li>
+                    <li>
+                    <h4>Darksky.net API</h4>
+                    <p>
+                        Once you created an Account get your API-KEY <a href="https://darksky.net/dev/account">here</a>.
+                    </p>
+                    </li>
+                    <li>
+                    <h4>Google Maps Geocoding API</h4>
+                    <p>
+                        Once you created an Account get your API-KEY <a href="https://developers.google.com/maps/documentation/geocoding/get-api-key">here</a>.
+                    </p>
+                    </li>
+                    </ul>
+                </p>
             </div>
             <h3>Heading4</h3>
             <div class="sub_content">
