@@ -71,8 +71,7 @@ if __name__ == "__main__":
     
     bot.page_changed.connect(lambda url: print("Url changed", url))
     bot.page_changed.connect(win.load)
-
-
+    
     try:
         bot.start()
         app.exec_()
