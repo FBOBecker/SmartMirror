@@ -24,7 +24,7 @@ These can be downloaded <a href="http://selenium-python.readthedocs.io/installat
 <p>
 You need to specify the path to the directory of your executable.
 Setting a Path variable in UNIX
-export PATH=%PATH your/path/
+export PATH=$PATH your/path/
 </p>
 
 ## API Reference
