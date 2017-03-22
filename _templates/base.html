@@ -23,9 +23,9 @@
     <div id="time">{{ now }}</div>
     <div id="main">
             {% block content %}
-            {% if response %}
+            {% if request.args.get('msg') %}
             <div id="interact">
-                {{ response }}
+                {{ request.args.get('msg') }}
             </div>
             {% endif %}
             {% endblock %}

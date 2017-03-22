@@ -24,17 +24,14 @@ def inject_now():
             if user['logged_in']:
                 name = user['name']
                 hometown = user['hometown']
-    if os.path.isfile('response.json'): 
-        data = get_data_from_file('response.json')
-        response = data['response']
-    else:
-        response = None
-    return {'now': datetime.utcnow(), 'name': name, 'hometown': hometown, 'response': response}
+
+    return {'now': datetime.utcnow(), 'name': name, 'hometown': hometown}
 
 
-@main.route("/<string:user>/home")
-def home(user):
-    if user == 'None':
+@main.route("/home")
+@main.route("/home/<string:user>")
+def home(user=None):
+    if user is None:
         return render_template("user_management.html")
     else:
         weather_params = None
