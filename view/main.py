@@ -5,6 +5,7 @@ from flask import Blueprint, abort, flash, redirect, render_template, request
 from weather import Weather
 from util import *
 from datetime import datetime
+import os.path
 main = Blueprint("main", __name__)
 weather_api_token = tokens.WEATHER_API_TOKEN
 
@@ -15,33 +16,51 @@ ICONS = {"clear-day": "day-sunny", "clear-night": "night-clear", "rain": "rain",
 
 @main.context_processor
 def inject_now():
-    return {'now': datetime.utcnow()}
-
-
-@main.route("/<string:user_name>/home/<string:city>/<string:response>", methods=["GET","POST"])
-def home(user_name, city, response):
-    if response == 'None':
+    name = None
+    hometown = None
+    data = get_data_from_file('users.json')
+    if data is not None:
+        for user in data['users']:
+            if user['logged_in']:
+                name = user['name']
+                hometown = user['hometown']
+    if os.path.isfile('response.json'): 
+        data = get_data_from_file('response.json')
+        response = data['response']
+    else:
         response = None
-    weather_params = get_weather(city)
-    return render_template("forecast.html", user_name=user_name, weather=weather_params, response=response)
+    return {'now': datetime.utcnow(), 'name': name, 'hometown': hometown, 'response': response}
 
 
-@main.route("/<string:user_name>/set_location")
-def set_location(user_name):
-    return render_template("set_location.html", user_name=user_name)
+@main.route("/<string:user>/home")
+def home(user):
+    if user == 'None':
+        return render_template("user_management.html")
+    else:
+        weather_params = None
+        data = get_data_from_file('users.json')
+        for u in data['users']:
+            if u['name'] == user:
+                city = u['hometown']
+                if city is not None:
+                    weather_params = get_weather(city)
+        return render_template("forecast.html", weather=weather_params)
+
+
+@main.route("/response")
+def response():
+    return render_template("response.html")
 
 
 @main.route("/user_management")
 def user_management():
-    user_options = ["1.Log in", "2.Create a new user", "3.See the user list", "4.Delete a user", "5.Go back"]
-
-    return render_template("user_management.html", user_options=user_options)
+    return render_template("user_management.html")
 
 
 @main.route("/show_users")
 def show_users():
-
-    return render_template("show_users.html")
+    user_list = get_user_list()
+    return render_template("show_users.html", users=user_list)
 
 
 @main.route("/forecast/<string:city>", methods=["GET","POST"])
@@ -54,11 +73,6 @@ def forecast(city):
 @main.route("/weather")
 def weather():
     return "GOOD FUCKING JOB!"
-
-
-@main.route("/simple_response/<string:response>")
-def simple_response(response):
-    return render_template("simple_response.html", response=response)
 
 
 def get_weather(city):

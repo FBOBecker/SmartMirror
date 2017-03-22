@@ -1,10 +1,37 @@
-#black {
-
-    width:100px;
-    height: 100px;
-    background-color: #111;
+#time {
+    border: 3px dashed #F00;
+    padding: 10px;
+    position: absolute;
+    right: 1em;
+    top: 0;
+    width: auto;
 }
 
 .temperature {
   font-size: 80px;
+}
+
+
+#main {
+	margin-top:50px;
+	position: relative;
+
+}
+
+#interact {
+	position: fixed;
+	top: 70%;
+    left: 35%;
+}
+
+body, html, div, ul, li, a, p
+{
+	background-color: black;
+	color: white;
+}
+
+#user_message {
+    position:fixed;
+    top: 30%;
+    left: 35%;
 }

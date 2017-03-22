@@ -1,3 +1,4 @@
+import os
 from json import load, dump
 try:
     from json.decoder import JSONDecodeError
@@ -38,3 +39,14 @@ def is_json(file):
         print('invalid json')
         return False
     return True
+
+
+def get_user_list():
+    if os.path.isfile("users.json"):
+        user_data = get_data_from_file("users.json")
+        if not(user_data is None):
+            user_list = []
+            for user in user_data['users']:
+                user_list.append(user['name'])
+            return user_list
+    return None
