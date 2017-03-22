@@ -1,6 +1,8 @@
 from json import load, dump
-from json.decoder import JSONDecodeError
-
+try:
+    from json.decoder import JSONDecodeError
+except:
+    from simplejson import JSONDecodeError
 
 number_conversion = {
     1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five',
