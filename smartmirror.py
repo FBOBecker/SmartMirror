@@ -16,6 +16,7 @@ from util import *
 from weather import Weather
 from speech import write
 from urllib.parse import quote
+from PyQt5.QtCore import QUrl, QThread, pyqtSignal
 
 import requests
 
@@ -27,12 +28,14 @@ weather_api_token = tokens.WEATHER_API_TOKEN
 wit_token = tokens.WIT_ACCESS_TOKEN
 
 
-class Bot():
+class Bot(QThread):
     URL_WIT = 'https://api.wit.ai/message?v=20170319&q={}'
     URL_USER_HOME = "http://localhost/home/{}"
     URL_USER_MANAGEMENT = "http://localhost/user_management"
     URL_FORECAST = "http://localhost/forecast/{}"
     URL_RESPONSE = "http://localhost/response"
+
+    page_changed = pyqtSignal(QUrl)
 
     def __init__(self, mode=write):
         super().__init__()
@@ -297,7 +300,8 @@ class Bot():
     def login(self, user_name=''):
         if self.current_user is not None:
             print("You are already logged in as " + self.current_user.name + ". Log out first.")
-            self.change_url(self.URL_USER_HOME.format(self.current_user.name), "You are already logged in as " + self.current_user.name + ". Log out first.")
+            self.pyqt_change_url(self.URL_USER_HOME.format(self.current_user.name), "You are already logged in as " + self.current_user.name + ". Log out first.")
+            # self.change_url(self.URL_USER_HOME.format(self.current_user.name), "You are already logged in as " + self.current_user.name + ". Log out first.")
         else:
             user_list = get_user_list()
             if user_list is None or len(user_list) == 0:
@@ -388,8 +392,10 @@ class Bot():
         print(get_user_list())
         if msg is None:
             self.change_url("http://localhost/show_users")
+            self.pyqt_change_url("http://localhost/show_users")
         else:
             self.change_url("http://localhost/show_users", msg)
+            self.pyqt_change_url("http://localhost/show_users", msg)
 
     def update_file(self):
         if self.logged_in():
@@ -421,3 +427,9 @@ class Bot():
 
     def close_browser(self):
         self.driver.close()
+
+    def pyqt_change_url(self, url, message=None):
+        if message is None:
+            self.page_changed.emit(QUrl(url))
+        else:
+            self.page_changed.emit(QUrl(url + '?msg=' + quote(message) ))
