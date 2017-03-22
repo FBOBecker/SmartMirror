@@ -8,6 +8,10 @@ from datetime import datetime
 main = Blueprint("main", __name__)
 weather_api_token = tokens.WEATHER_API_TOKEN
 
+ICONS = {"clear-day": "day-sunny", "clear-night": "night-clear", "rain": "rain", "snow": "snow", "sleet": "sleet",
+         "wind": "strong-wind", "fog": "fog", "cloudy": "cloudy", "partly-cloudy-day": "day-cloudy",
+         "partly-cloudy-night": "night-cloudy"}
+
 
 @main.context_processor
 def inject_now():
@@ -39,6 +43,7 @@ def show_users():
 
     return render_template("show_users.html")
 
+
 @main.route("/forecast/<string:city>", methods=["GET","POST"])
 def forecast(city):
     weather_params = get_weather(city)
@@ -68,4 +73,4 @@ def get_weather(city):
     icon = weather_obj['icon']
     wind_speed = weather_obj['windSpeed']
 
-    return {'City': city, 'Temperature':temperature, 'Windspeed': wind_speed, 'Icon':icon}
+    return {'City': city, 'Temperature': temperature, 'Windspeed': wind_speed, 'Icon': ICONS[icon]}

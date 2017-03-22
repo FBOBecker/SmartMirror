@@ -26,7 +26,7 @@ weather_api_token = tokens.WEATHER_API_TOKEN
 wit_token = tokens.WIT_ACCESS_TOKEN
 
 
-class Bot():
+class Bot:
     URL_WIT = 'https://api.wit.ai/message?v=20170319&q={}'
     URL_USER_HOME = "http://localhost/{}/home/{}/{}"
     URL_USER_MANAGEMENT = "http://localhost/user_management"
@@ -93,7 +93,7 @@ class Bot():
             if intent is not None:
                 if intent == 'weather':
                     location = self.get_location(json_resp)
-                    if location is not  None:
+                    if location is not None:
                         self.change_url(self.URL_FORECAST.format(location))
                     else:
                         self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, 'From where do you want to know the weather?'))
@@ -263,7 +263,6 @@ class Bot():
                     user_data['users'] = user_list
 
                     dump_data_to_file(user_data, "users.json")
-                    
 
     def login(self, user_name=''):
         if self.current_user is not None:
@@ -319,7 +318,6 @@ class Bot():
                             dump_data_to_file(dump_data, "last_use.json")
                             print("Hello " + self.current_user.name + "!\nYou are logged in now!")
 
-                
                 self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, 'None'))
 
     def logout(self):

@@ -2,10 +2,6 @@
 {% block content %}
 {{ super() }}
 {% if user_name %}
-<div>
-Hello, {{ user_name }}!
-What can I do you for? ;)
-</div>
 {% endif %}
 {% if response %}
 <div style="margin-left:200px">
@@ -13,13 +9,25 @@ What can I do you for? ;)
 </div>
 {% endif %}
 
+{{ style("css/weather-icons.css") }}
+
 <div class='weather'>
-    Wetter für <big>{{ weather['City'] }}</big>
-    
-    <p class="temperature" style="font-size: 80px">{{ weather['Temperature'] }}°C</p>
+    <h1>
+        <span class="label label-default">Hello, {{ user_name }}! What can I do you for? ;)</span>
+    </h1>
+    <div class="panel panel-default">
+  <div class="panel-body">
+    Wetter für {{ weather['City'] }}
+
+    <p class="temperature" style="font-size: 80px">{{ weather['Temperature'] }}°C | <span><i class="wi wi-{{ weather["Icon"] }}"></i></span> {{ weather["Icon"] }}</p>
 
         {% for key in weather%}
-            <h1>{{ key }}: {{ weather[key] }}</h1>
+            {% if key != "Icon"%}
+                <h1>{{ key }}: {{ weather[key] }}</h1>
+            {% endif %}
         {% endfor %}
+  </div>
+</div>
+
 </div>
 {% endblock %}

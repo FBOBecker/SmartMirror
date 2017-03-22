@@ -1,5 +1,5 @@
 import os
-from sys import argv, executable
+from sys import argv, executable, platform
 
 from server import create_app
 from smartmirror import Bot
@@ -25,12 +25,16 @@ def help_mode():
 
 if __name__ == "__main__":
 
-    euid = os.geteuid()
-    if euid != 0:
-        print("Script not started as root. Running sudo..")
-        args = ['sudo', executable] + argv + [os.environ]
-        os.execlpe('sudo', *args)
-    print('Running. Your euid is', euid)
+    if platform != "win32":
+        try:
+            euid = os.geteuid()
+            if euid != 0:
+                print("Script not started as root. Running sudo..")
+                args = ['sudo', executable] + argv + [os.environ]
+                os.execlpe('sudo', *args)
+            print('Running. Your euid is', euid)
+        except Exception as e:
+            print("KLAPPT NICH KEK")
 
     if("--h" in argv):
         help_mode()

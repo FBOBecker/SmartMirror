@@ -1,0 +1,31 @@
+{% macro script(filename=None, url=None) %}
+    {% if filename %}
+        {% set url = url_for("static", filename=filename) %}
+    {% endif %}
+    <script src="{{ url }}"></script>
+{% endmacro %}
+
+{% macro scripts(filenames=None, ulrs=None) %}
+    {% for filename in filenames %}
+        {{ script(filename) }}
+    {% endfor %}
+    {% for url in urls %}
+        {{ script(url=url) }}
+    {% endfor %}
+{% endmacro %}
+
+{% macro style(filename=None, url=None) %}
+    {% if filename %}
+        {% set url = url_for("static", filename=filename) %}
+    {% endif %}
+    <link rel="stylesheet" href="{{ url }}">
+{% endmacro %}
+
+{% macro styles(filenames=None, urls=None) %}
+    {% for filename in filenames %}
+        {{ style(filename) }}
+    {% endfor %}
+    {% for url in urls %}
+        {{ style(url=url) }}
+    {% endfor %}
+{% endmacro %}
