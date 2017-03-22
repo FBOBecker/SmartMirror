@@ -26,12 +26,12 @@ weather_api_token = tokens.WEATHER_API_TOKEN
 wit_token = tokens.WIT_ACCESS_TOKEN
 
 
-class Bot:
+class Bot():
     URL_WIT = 'https://api.wit.ai/message?v=20170319&q={}'
-    URL_USER_HOME = "http://localhost/{}/home/{}/{}"
+    URL_USER_HOME = "http://localhost/{}/home"
     URL_USER_MANAGEMENT = "http://localhost/user_management"
     URL_FORECAST = "http://localhost/forecast/{}"
-    URL_SIMPLE_RESPONSE = "http://localhost/simple_response/{}"
+    URL_RESPONSE = "http://localhost/response"
 
     def __init__(self, mode=write):
         super().__init__()
@@ -60,6 +60,11 @@ class Bot:
         while True:
             sleep(0.1)
             try:
+                os.remove('response.json')
+            except Exception as e:
+                print(e)
+                pass
+            try:
                 command = self.speech()
             except Exception as e:
                 print(e)
@@ -68,6 +73,10 @@ class Bot:
             self.action(command)
 
     def action(self, command):
+        if self.logged_in():
+            name = self.current_user.name
+        else:
+            name = 'None'
 
         r = None
         try:
@@ -76,7 +85,8 @@ class Bot:
         except Exception as e:
             # did not get the request from wit.ai
             print("REQUEST FAILED")
-            self.change_url(self.URL_SIMPLE_RESPONSE.format('Request to wit.ai did not work.'))
+            self.write_response('Request to wit.ai did not work.')
+            self.change_url(self.URL_USER_HOME.format(name))
             return
 
         if r is not None:
@@ -84,69 +94,83 @@ class Bot:
             json_resp = json.loads(r.text)
             if 'error' in json_resp:
                 print('Authentication with wit.ai failed.')
-                self.change_url(self.URL_SIMPLE_RESPONSE.format('Authentication with wit.ai failed.'))
+                self.change_url(self.URL_USER_HOME.format(name))
                 return
             intent = self.get_intent(json_resp)
             location = self.get_location(json_resp)
-            print("LOCATION: ", location)
 
             if intent is not None:
                 if intent == 'weather':
                     location = self.get_location(json_resp)
-                    if location is not None:
+                    if location is not  None:
                         self.change_url(self.URL_FORECAST.format(location))
                     else:
-                        self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, 'From where do you want to know the weather?'))
+                        self.write_response( "Desired text")
+                        self.change_url(self.URL_USER_HOME.format(name))
                         location = self.speech()
                         if location in self.cities:
-                            self.change_url(self.URL_USER_HOME.format(self.current_user.name, location, 'Here you go!'))
+                            self.write_response()
+                            self.change_url(self.URL_USER_HOME.format(name))
                         else:
-                            self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, 'I do not know of this place, sorry!'))
+                            self.write_response('I do not know of this place, sorry!')
+                            self.change_url(self.URL_USER_HOME.format(name))
                 elif intent == 'hometown':
                     self.set_user_location()
                 elif intent == 'logout':
                     self.logout()
                 elif intent == 'login':
+                    self.write_response("Logintext")
                     self.login()
                 elif intent == 'greeting':
-                    self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, 'Hello yourself'))
+                    self.write_response('Hello yourself!')
+                    self.change_url(self.URL_USER_HOME.format(name))
                 elif intent == 'options':
                     self.use_options()
+                elif intent == 'user_creation':
+                    self.create_new_user()
+                elif intent == 'user_deletion':
+                    self.delete_user()
+                elif intent == 'user_show':
+                    self.show_users()
                 elif intent == 'shutdown':
                     exit()
             elif location is not None:
-                    self.change_url(self.URL_USER_HOME.format(self.current_user.name, location, 'Le Wetter!'))
+                    self.change_url(self.URL_USER_HOME.format(name))
             else:
-                if(self.logged_in()):
-                    self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, 'I do not understand the intend of your statement.'))
-                else:
-                    self.change_url(self.URL_SIMPLE_RESPONSE.format('I do not understand the intend of your statement.'))
+                self.response = 'I do not understand the intend of your statement.'
+                self.change_url(self.URL_USER_HOME.format(name))
         
     def set_user_location(self):
         """
         TODO: if old_hometown == new_hometown -> print something and exit
         """
-        if self.current_user.hometown != '':
-            print("Your current hometown is '" + self.current_user.hometown + "'")
-        self.change_url(self.URL_SIMPLE_RESPONSE.format("Tell me which town to set as your hometown."))
-        print('Tell me which town to set as your hometown.')
+        if self.logged_in():
+            if self.current_user.hometown is not None:
+                print("Your current hometown is '" + self.current_user.hometown + "'")
+            self.write_response("Telle me which town to set as your hometown.")
+            self.change_url(self.URL_USER_HOME.format(self.current_user.name))
+            print('Tell me which town to set as your hometown.')
 
-        command = self.speech()
+            command = self.speech()
 
-        if command in self.cities:
-            self.current_user.hometown = command
-            data = get_data_from_file("users.json")
-            for user in data['users']:
-                if user["name"] == self.current_user.name:
-                    user['hometown'] = self.current_user.hometown
-            dump_data_to_file(data, "users.json")
-            sleep(1)
-            self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, ('Hometown successfully set to {} !').format(self.current_user.hometown)))
+            if command in self.cities:
+                self.current_user.hometown = command
+                data = get_data_from_file("users.json")
+                for user in data['users']:
+                    if user["name"] == self.current_user.name:
+                        user['hometown'] = self.current_user.hometown
+                dump_data_to_file(data, "users.json")
+                self.write_response('Hometown successfully set to ' + self.current_user.hometown + '!')
+                self.change_url(self.URL_USER_HOME.format(self.current_user.name))
 
-            print("Set your hometown to '" + self.current_user.hometown + "'.")
+                print("Set your hometown to '" + self.current_user.hometown + "'.")
+            else:
+                self.write_response("I may not know that city.")
+                self.change_url(self.URL_USER_HOME.format(self.current_user.name))
+                print("I may not know that city.")
         else:
-            self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, "I may not know that city."))
-            print("I may not know that city.")
+            self.write_response("Log in first before setting a hometown.")
+            self.change_url(self.URL_USER_HOME.format('None'))
 
     def use_options(self):
         if self.logged_in():
@@ -173,7 +197,8 @@ class Bot:
 
     def user_management(self):
         if(self.logged_in()):
-            self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, "You are already logged in."))
+            self.write_response("You are already logged in as " + self.current_user.name + ".")
+            self.change_url(self.URL_USER_HOME.format(self.current_user.name))
             return
         else:
             self.change_url(self.URL_USER_MANAGEMENT)
@@ -192,9 +217,14 @@ class Bot:
         else:
             correct = False
             while not correct:
+                self.write_response("New User creation. Please spell your name for me. To cancel say 'abort' or 'cancel'.")
+                self.change_url(self.URL_RESPONSE)
                 print("New User creation. Please spell your name for me. To cancel say 'abort' or 'cancel'.")
+                self.change_url
                 command = self.speech()
                 print("You said '" + command + "'. Is that correct?")
+                self.write_response("You said '" + command + "'. Is that correct?")
+                self.change_url(self.URL_RESPONSE)
                 if any(command in w for w in CANCEL_LIST):
                     return
                 approval_command = self.speech()
@@ -213,24 +243,35 @@ class Bot:
                 user_list = user_data['users']
                 if any(user['name'] == command for user in user_list):
                     print("User already exists... - Choose another name, please.")
+                    self.write_response("User already exists... - Choose another name, please.")
+                    self.change_url(self.URL_RESPONSE)
                     return self.create_new_user()
 
             dump_data = get_data_from_file("users.json")
 
-            dump_data["users"].append({"name": command, "hometown": '', "hobbies": []})
+            dump_data["users"].append({"name": command, "hometown": None, "hobbies": None, "logged_in": False})
 
             dump_data_to_file(dump_data, "users.json")
 
             print("User " + command + " successfully created.")
+            self.write_response("User " + command + " successfully created.")
+            self.change_url(self.URL_RESPONSE)
+            sleep(3)
             self.login(command)
 
     def delete_user(self):
-        print("Which user do you want to remove?")
-        self.show_users()
-        user_list = self.get_user_list()
+        user_list = get_user_list()
         if user_list is None or len(user_list) == 0:
             print("There are no users yet.")
+            self.write_response("There are no users yet.")
+            self.change_url(self.URL_RESPONSE)
+            sleep(3)
+            self.write_response(None, True)
+            self.change_url(self.URL_USER_MANAGEMENT)
         else:
+            print("Which user do you want to remove?")
+            self.write_response("Which user do you want to remove?")
+            self.show_users()
             command = self.speech()
             print("You said " + command)
 
@@ -244,6 +285,8 @@ class Bot:
                 user_match[number_conversion(count)] = i
                 count += 1
 
+            print("numbers:", command_list)
+            print("NAMES:", user_match)
             if any(command in w for w in command_list):
                 if command in user_match.keys():
                     user_to_delete = user_match[command]
@@ -254,23 +297,40 @@ class Bot:
                 user_list = user_data['users']
 
                 item_index = next(index for (index, user) in enumerate(user_list) if user['name'] == user_to_delete)
-
+                
+                user_name = user_list[item_index]['name']
+                print('Are you sure you want to delete ' + user_name + '?')
+                self.write_response('Are you sure you want to delete ' + user_name + '?')
+                self.change_url(self.URL_RESPONSE)
                 approval_command = self.speech()
 
                 if any(approval_command in w for w in APPROVAL_LIST):
                     del user_list[item_index]
 
-                    user_data['users'] = user_list
+                    if len(user_list) == 0:
+                        os.remove('users.json')
+                    else:
+                        user_data['users'] = user_list
+                        dump_data_to_file(user_data, "users.json")
 
-                    dump_data_to_file(user_data, "users.json")
+                    print('User ' + user_name + ' deleted!')
+                    self.write_response('User ' + user_name + ' deleted!')
+                else:
+                    self.write_response('Did not delete the user')
+                self.change_url(self.URL_USER_MANAGEMENT)
 
     def login(self, user_name=''):
         if self.current_user is not None:
             print("You are already logged in as " + self.current_user.name + ". Log out first.")
+            self.write_response("You are already logged in as " + self.current_user.name + ". Log out first.") 
+            self.change_url(self.URL_USER_HOME.format(self.current_user.name))
         else:
-            user_list = self.get_user_list()
+            user_list = get_user_list()
             if user_list is None or len(user_list) == 0:
                 print("There are no Users to chose from. - Redirecting to User Creation")
+                self.write_response("There are no Users to chose from. - Redirecting to User Creation") 
+                self.change_url(self.URL_RESPONSE)
+                sleep(3)
                 self.create_new_user()
             else:
                 if not user_name == '':
@@ -281,6 +341,9 @@ class Bot:
                             self.current_user.name = user['name']
                             self.current_user.hometown = user['hometown']
                             self.current_user.hobbies = user['hobbies']
+                            user['logged_in'] = True
+
+                            dump_data_to_file(user_data, 'users.json')
                 else:
                     while(not(self.logged_in())):
                         print("Select your Profile from the following list of users by saying the Name or Number:")
@@ -312,16 +375,24 @@ class Bot:
                                 if user['name'] == self.current_user.name:
                                     self.current_user.hometown = user['hometown']
                                     self.current_user.hobbies = user['hobbies']
+                                    user['logged_in'] = True
 
                             dump_data = {"name": self.current_user.name}
 
                             dump_data_to_file(dump_data, "last_use.json")
+                            dump_data_to_file(data, 'users.json')
                             print("Hello " + self.current_user.name + "!\nYou are logged in now!")
 
-                self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, 'None'))
+                
+                self.change_url(self.URL_USER_HOME.format(self.current_user.name))
 
     def logout(self):
         if(self.logged_in()):
+            data = get_data_from_file('users.json')
+            for user in data['users']:
+                if user['logged_in']:
+                    user['logged_in'] = False
+            dump_data_to_file(data, 'users.json')
             self.current_user = None
             
             self.user_management()
@@ -341,18 +412,8 @@ class Bot:
             print("How would I know such a thing? You are not logged in...")
 
     def show_users(self):
-        print(self.get_user_list())
+        print(get_user_list())
         self.change_url("http://localhost/show_users")
-
-    def get_user_list(self):
-        if os.path.isfile("users.json"):
-            user_data = get_data_from_file("users.json")
-            if not(user_data is None):
-                user_list = []
-                for user in user_data['users']:
-                    user_list.append(user['name'])
-                return user_list
-        return None
 
     def update_file(self):
         if self.logged_in():
@@ -381,3 +442,10 @@ class Bot:
 
     def close_browser(self):
         self.driver.close()
+
+    def write_response(self, response, NORESPONSE=False):
+        if NORESPONSE:
+            os.remove('response.json')
+        else:
+            data = {'response': response}
+            dump_data_to_file(data, 'response.json')

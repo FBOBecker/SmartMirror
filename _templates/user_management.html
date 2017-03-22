@@ -1,13 +1,21 @@
 {% extends "base.html" %}
 {% block content %}
 {{ super() }}
-<div>
+<div id="user_message">
+<h1>Choose the option from the list.</h1>
 <ul>
-{% for opt_string in user_options %}
 <li>
-{{ opt_string }}
+1.Log in
 </li>
-{% endfor %}
+<li>
+2.Create a new user
+</li>
+<li>
+3.See the user list
+</li>
+<li>
+4.Delete a user
+</li>
 </ul>
 </div>
 {% endblock %}
