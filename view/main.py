@@ -61,7 +61,7 @@ def home(date_time=0, user=None):
 
 @main.route("/response")
 def response():
-    return render_template("response.html")
+    return render_template("response.html", name=None)
 
 
 @main.route("/user_management")

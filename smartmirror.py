@@ -57,7 +57,7 @@ class Bot(QThread):
             self.pyqt_change_url(self.URL_USER_MANAGEMENT, "I'm listening...")
             self.user_management()
         while True:
-            sleep(3)
+            sleep(2.5)
 
             if self.message:
                 self.pyqt_change_url(self.active_url, "I'm listening...")
@@ -129,7 +129,9 @@ class Bot(QThread):
                     self.show_users()
                 elif intent == 'mirror':
                     self.pyqt_change_url(self.URL_RESPONSE,"See you later.")
+                    sleep(1)
                     self.pyqt_change_url(self.URL_SLEEP)
+                    self.update_file()
                     while True:
                         try:
                             command = self.speech()
