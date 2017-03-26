@@ -19,6 +19,19 @@ WEEKDAYS = {0: "Monday", 1: "Tuesday", 2: "Wednesday", 3: "Thursday", 4: "Friday
 def inject_now():
     name = None
     hometown = None
+    today = datetime.today().timetuple()
+    date = str(today[2]) + '.' + str(today[1]) + '.' + str(today[0])
+    time = str(today[3]) + ':' + str(today[4])
+    weekday = WEEKDAYS[today[6]]
+    if 8 < today[3] < 15:
+        time_icon = "sunrise"
+    elif 15 < today[3] < 21:
+        time_icon = "sunset"
+    elif 21 < today[3]:
+        time_icon = "moonrise"
+        print("Moonrise")
+    elif today[3] < 8:
+        time_icon = "moonset"
     data = get_data_from_file('users.json')
     if data is not None:
         for user in data['users']:
@@ -26,7 +39,7 @@ def inject_now():
                 name = user['name']
                 hometown = user['hometown']
 
-    return {'now': datetime.utcnow(), 'name': name, 'hometown': hometown}
+    return {'date': date, 'time': time, 'weekday': weekday, 'time_icon':time_icon, 'name': name, 'hometown': hometown}
 
 
 @main.route("/home/")
@@ -99,16 +112,5 @@ def get_weather(city, date_time=0):
         dict['hour'] = dateutil.parser.parse(dict['time']).hour
 
     print(weather_obj)
-    datetime_str = weather_obj[0]['time']
-    datelist = datetime_str.split(' ')
-    datestr = datelist[0]
-    new_date = datestr[8:] + '.' + datestr[5:7] + '.' + datestr[:4]
-    new_time = datelist[1][:5]
-    print(new_time)
-    timestr = datelist[1]
-    print(datelist)
-    weather_obj[0]['datetime'] = weather_obj[0]['time']    
-    weather_obj[0]['time'] = new_time
-    weather_obj[0]['date'] = new_date
     weather_obj[0]['city'] = city
     return weather_obj

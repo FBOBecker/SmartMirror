@@ -35,6 +35,10 @@
             </div>
             {% endif %}
             {% endblock %}
+                <div id="date">
+        <big>{{ weekday }}</big><p>{{ date }}</p>
+        <p>{{ time }}{% if time_icon %}&nbsp;<span><i class="wi wi-{{ time_icon }}"></i></span>{% endif %}</p>
+    </div>
     </div>
 </div>
 </body>

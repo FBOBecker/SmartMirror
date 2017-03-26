@@ -7,15 +7,15 @@
 <div class='weather'>
         {% if weather|length != 8 %}
         <div>
-            Weather for <big>{{ weather[0]['city'] }}</big> (Last updated: {{ weather[0]['datetime'] }})
+            Weather for <big>{{ weather[0]['city'] }}</big>
             <p class="temperature" style="font-size: 80px">
 		{{ weather[0]['temperature'] }}°C | 
 		<span><i class="wi wi-{{ weather[0]["icon"] }}"></i></span>
 	    </p>
 <div id="weatherinfo">
                         {{ weather[0]['summary'] }} &nbsp;|&nbsp;
-                        {{ weather[0]['precipProbability']*100 }}%  &nbsp; Regenicon &nbsp;|&nbsp;
-                      	Windicon &nbsp; {{ weather[0]['windSpeed'] }} km/h
+                        {{ weather[0]['precipProbability']*100 }}%  &nbsp; <span><i class="wi wi-humidity"></i></span> &nbsp;|&nbsp;
+                      	<span><i class="wi wi-strong-wind"></i></span> &nbsp; {{ weather[0]['windSpeed'] }} km/h
 </div>
           </div>
         {% endif %}
@@ -42,10 +42,6 @@
           </div>
         </div>
         {% endif %}
-	<div id="date">
-		<big>{{ weather[0]['weekday'] }}</big><p>{{ weather[0]['date'] }}</p>
-		<p>{{ weather[0]['time'] }}</p>
-	</div>
 {% else %}
     <p>You don't have a hometown set.</p>
 {% endif %}
