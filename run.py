@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     app = QApplication([])
     win = QWebView()
-    win.show()
+    win.showFullScreen()
     win.loadFinished.connect(lambda ok: print("finish", ok))
     win.loadProgress.connect(lambda p: print("progress", p))
     win.loadStarted.connect(lambda: print("started"))
