@@ -5,29 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>SmartMirror</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/base.css') }}" />
-    <!-- Bootstrap -->
-    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
-    {{ style("css/bootstrap.min.css") }}
-	<script>
-		function startTime() {
-		    var today = new Date();
-		    var h = today.getHours();
-		    var m = today.getMinutes();
-		    var s = today.getSeconds();
-		    m = checkTime(m);
-		    s = checkTime(s);
-		    document.getElementById('txt').innerHTML =
-		    h + ":" + m + ":" + s;
-		    var t = setTimeout(startTime, 500);
-		}
-		function checkTime(i) {
-		    if (i < 10) {i = "0" + i};  // add zero in front of numbers < 10
-		    return i;
-		}
-	</script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/base.css') }}" />	
 </head>
-<body>
+<body onload="startTime">
+<div id="inside">
     {% with messages = get_flashed_messages() %}
         {% if messages %}
         <ul>
@@ -37,7 +18,7 @@
         </ul>
         {% endif %}
     {% endwith %}
-    <div id="time"></div>
+<div id="time">{{ now }}</div>
     <div id="main">
             {% block content %}
             {% if request.args.get('msg') %}
@@ -47,7 +28,6 @@
             {% endif %}
             {% endblock %}
     </div>
-
+</div>
 </body>
-{{ scripts(("js/jquery.min.js", "js/bootstrap.min.js")) }}
 </html>

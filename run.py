@@ -77,4 +77,3 @@ if __name__ == "__main__":
         app.exec_()
     finally:
         bot.update_file()
-        bot.close_browser()
