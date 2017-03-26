@@ -99,5 +99,16 @@ def get_weather(city, date_time=0):
         dict['hour'] = dateutil.parser.parse(dict['time']).hour
 
     print(weather_obj)
+    datetime_str = weather_obj[0]['time']
+    datelist = datetime_str.split(' ')
+    datestr = datelist[0]
+    new_date = datestr[8:] + '.' + datestr[5:7] + '.' + datestr[:4]
+    new_time = datelist[1][:5]
+    print(new_time)
+    timestr = datelist[1]
+    print(datelist)
+    weather_obj[0]['datetime'] = weather_obj[0]['time']    
+    weather_obj[0]['time'] = new_time
+    weather_obj[0]['date'] = new_date
     weather_obj[0]['city'] = city
     return weather_obj
