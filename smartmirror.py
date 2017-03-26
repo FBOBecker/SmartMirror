@@ -13,21 +13,22 @@ from util import *
 from weather import Weather
 from speech import write
 from urllib.parse import quote
+from PyQt5.QtCore import QUrl, QThread, pyqtSignal
 
 import requests
-
-from selenium import webdriver
 
 weather_api_token = tokens.WEATHER_API_TOKEN
 wit_token = tokens.WIT_ACCESS_TOKEN
 
 
-class Bot:
+class Bot(QThread):
     URL_WIT = 'https://api.wit.ai/message?v=20170319&q={}'
     URL_USER_HOME = "http://localhost/home/{}"
     URL_USER_MANAGEMENT = "http://localhost/user_management"
     URL_FORECAST = "http://localhost/forecast/{}/{}"
     URL_RESPONSE = "http://localhost/response"
+
+    page_changed = pyqtSignal(QUrl)
 
     def __init__(self, mode=write):
         super().__init__()
@@ -36,7 +37,12 @@ class Bot:
         cities = get_data_from_file("cities.json")
         self.cities = cities['cities']
         self.speech = mode
-        self.driver = webdriver.Chrome()
+
+
+    def run(self):
+        """
+        Bot running
+        """
 
         data = get_data_from_file("last_use.json")
         if data is not None:
@@ -46,13 +52,8 @@ class Bot:
         else:
             f = open("last_use.json", "w+")
             f.close()
-            self.change_url(self.URL_USER_MANAGEMENT)
+            self.pyqt_change_url(self.URL_USER_MANAGEMENT)
             self.user_management()
-
-    def run(self):
-        """
-        Bot running
-        """
         while True:
             sleep(0.1)
             try:
@@ -76,7 +77,7 @@ class Bot:
         except Exception as e:
             # did not get the request from wit.ai
             print("REQUEST FAILED")
-            self.change_url(self.URL_USER_HOME.format(name), 'Request to wit.ai did not work.')
+            self.pyqt_change_url(self.URL_USER_HOME.format(name), 'Request to wit.ai did not work.')
             return
 
         if r is not None:
@@ -84,7 +85,7 @@ class Bot:
             json_resp = json.loads(r.text)
             if 'error' in json_resp:
                 print('Authentication with wit.ai failed.')
-                self.change_url(self.URL_USER_HOME.format(name))
+                self.pyqt_change_url(self.URL_USER_HOME.format(name))
                 return
             intent = self.get_intent(json_resp)
             location = self.get_location(json_resp)
@@ -94,14 +95,14 @@ class Bot:
                 if intent == 'weather':
                     location = self.get_location(json_resp)
                     if location is not None:
-                        self.change_url(self.URL_FORECAST.format(location, date_time))
+                        self.pyqt_change_url(self.URL_FORECAST.format(location, date_time))
                     else:
-                        self.change_url(self.URL_USER_HOME.format(name), "Desired text")
+                        self.pyqt_change_url(self.URL_USER_HOME.format(name), "Desired text")
                         location = self.speech()
                         if location in self.cities:
-                            self.change_url(self.URL_USER_HOME.format(name))
+                            self.pyqt_change_url(self.URL_USER_HOME.format(name))
                         else:
-                            self.change_url(self.URL_USER_HOME.format(name), 'I do not know of this place, sorry!')
+                            self.pyqt_change_url(self.URL_USER_HOME.format(name), 'I do not know of this place, sorry!')
                 elif intent == 'hometown':
                     self.set_user_location()
                 elif intent == 'logout':
@@ -109,7 +110,7 @@ class Bot:
                 elif intent == 'login':
                     self.login()
                 elif intent == 'greeting':
-                    self.change_url(self.URL_USER_HOME.format(name), 'Hello yourself!')
+                    self.pyqt_change_url(self.URL_USER_HOME.format(name), 'Hello yourself!')
                 elif intent == 'options':
                     self.use_options()
                 elif intent == 'user_creation':
@@ -121,9 +122,9 @@ class Bot:
                 elif intent == 'shutdown':
                     exit()
             elif location is not None:
-                    self.change_url(self.URL_USER_HOME.format(name))
+                    self.pyqt_change_url(self.URL_USER_HOME.format(name))
             else:
-                self.change_url(self.URL_USER_HOME.format(name), 'I do not understand the intent of your statement.')
+                self.pyqt_change_url(self.URL_USER_HOME.format(name), 'I do not understand the intent of your statement.')
         
     def set_user_location(self):
         """
@@ -132,7 +133,7 @@ class Bot:
         if self.logged_in():
             if self.current_user.hometown is not None:
                 print("Your current hometown is '" + self.current_user.hometown + "'")
-            self.change_url(self.URL_USER_HOME.format(self.current_user.name), "Telle me which town to set as your hometown.")
+            self.pyqt_change_url(self.URL_USER_HOME.format(self.current_user.name), "Telle me which town to set as your hometown.")
             print('Tell me which town to set as your hometown.')
 
             command = self.speech()
@@ -144,17 +145,17 @@ class Bot:
                     if user["name"] == self.current_user.name:
                         user['hometown'] = self.current_user.hometown
                 dump_data_to_file(data, "users.json")
-                self.change_url(self.URL_USER_HOME.format(self.current_user.name), 'Hometown successfully set to ' + self.current_user.hometown + '!')
+                self.pyqt_change_url(self.URL_USER_HOME.format(self.current_user.name), 'Hometown successfully set to ' + self.current_user.hometown + '!')
                 print("Set your hometown to '" + self.current_user.hometown + "'.")
             else:
-                self.change_url(self.URL_USER_HOME.format(self.current_user.name), "I may not know that city.")
+                self.pyqt_change_url(self.URL_USER_HOME.format(self.current_user.name), "I may not know that city.")
                 print("I may not know that city.")
         else:
-            self.change_url(self.URL_USER_HOME.format('None'), "Log in first before setting a hometown.")
+            self.pyqt_change_url(self.URL_USER_HOME.format('None'), "Log in first before setting a hometown.")
 
     def use_options(self):
         if self.logged_in():
-            self.change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown, 
+            self.pyqt_change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown,
                 "You can ask me for the weather, set your hometown, manage your hobbies or log out."))
         else:
             self.user_management()
@@ -177,10 +178,10 @@ class Bot:
 
     def user_management(self):
         if(self.logged_in()):
-            self.change_url(self.URL_USER_HOME.format(self.current_user.name), "You are already logged in as " + self.current_user.name + ".")
+            self.pyqt_change_url(self.URL_USER_HOME.format(self.current_user.name), "You are already logged in as " + self.current_user.name + ".")
             return
         else:
-            self.change_url(self.URL_USER_MANAGEMENT)
+            self.pyqt_change_url(self.URL_USER_MANAGEMENT)
 
     """
     creates a new user in "./users.json"
@@ -196,12 +197,12 @@ class Bot:
         else:
             correct = False
             while not correct:
-                self.change_url(self.URL_RESPONSE, "New User creation. Please spell your name for me. To cancel say 'abort' or 'cancel'.")
+                self.pyqt_change_url(self.URL_RESPONSE, "New User creation. Please spell your name for me. To cancel say 'abort' or 'cancel'.")
                 print("New User creation. Please spell your name for me. To cancel say 'abort' or 'cancel'.")
-                self.change_url
+                self.pyqt_change_url
                 command = self.speech()
                 print("You said '" + command + "'. Is that correct?")
-                self.change_url(self.URL_RESPONSE, "You said '" + command + "'. Is that correct?")
+                self.pyqt_change_url(self.URL_RESPONSE, "You said '" + command + "'. Is that correct?")
                 if any(command in w for w in CANCEL_LIST):
                     return
                 approval_command = self.speech()
@@ -220,7 +221,7 @@ class Bot:
                 user_list = user_data['users']
                 if any(user['name'] == command for user in user_list):
                     print("User already exists... - Choose another name, please.")
-                    self.change_url(self.URL_RESPONSE, "User already exists... - Choose another name, please.")
+                    self.pyqt_change_url(self.URL_RESPONSE, "User already exists... - Choose another name, please.")
                     return self.create_new_user()
 
             dump_data = get_data_from_file("users.json")
@@ -230,7 +231,7 @@ class Bot:
             dump_data_to_file(dump_data, "users.json")
 
             print("User " + command + " successfully created.")
-            self.change_url(self.URL_RESPONSE, "User " + command + " successfully created.")
+            self.pyqt_change_url(self.URL_RESPONSE, "User " + command + " successfully created.")
             sleep(3)
             self.login(command)
 
@@ -238,9 +239,9 @@ class Bot:
         user_list = get_user_list()
         if user_list is None or len(user_list) == 0:
             print("There are no users yet.")
-            self.change_url(self.URL_RESPONSE, "There are no users yet.")
+            self.pyqt_change_url(self.URL_RESPONSE, "There are no users yet.")
             sleep(3)
-            self.change_url(self.URL_USER_MANAGEMENT)
+            self.pyqt_change_url(self.URL_USER_MANAGEMENT)
         else:
             print("Which user do you want to remove?")
             self.show_users("Which user do you want to remove?")
@@ -272,7 +273,7 @@ class Bot:
                 
                 user_name = user_list[item_index]['name']
                 print('Are you sure you want to delete ' + user_name + '?')
-                self.change_url(self.URL_RESPONSE, 'Are you sure you want to delete ' + user_name + '?')
+                self.pyqt_change_url(self.URL_RESPONSE, 'Are you sure you want to delete ' + user_name + '?')
                 approval_command = self.speech()
 
                 if any(approval_command in w for w in APPROVAL_LIST):
@@ -286,19 +287,20 @@ class Bot:
 
                     print('User ' + user_name + ' deleted!')
                     msg = 'User ' + user_name + ' deleted!'
+                    self.pyqt_change_url(self.URL_USER_MANAGEMENT, msg)
                 else:
                     msg = 'Did not delete the user'
-                    self.change_url(self.URL_USER_MANAGEMENT, msg)
+                    self.pyqt_change_url(self.URL_USER_MANAGEMENT, msg)
 
     def login(self, user_name=''):
         if self.current_user is not None:
             print("You are already logged in as " + self.current_user.name + ". Log out first.")
-            self.change_url(self.URL_USER_HOME.format(self.current_user.name), "You are already logged in as " + self.current_user.name + ". Log out first.")
+            self.pyqt_change_url(self.URL_USER_HOME.format(self.current_user.name), "You are already logged in as " + self.current_user.name + ". Log out first.")
         else:
             user_list = get_user_list()
             if user_list is None or len(user_list) == 0:
                 print("There are no Users to chose from. - Redirecting to User Creation")
-                self.change_url(self.URL_RESPONSE, )
+                self.pyqt_change_url(self.URL_RESPONSE, "There are no Users to chose from. - Redirecting to User Creation")
                 sleep(3)
                 self.create_new_user()
             else:
@@ -353,7 +355,7 @@ class Bot:
                             print("Hello " + self.current_user.name + "!\nYou are logged in now!")
 
                 
-                self.change_url(self.URL_USER_HOME.format(self.current_user.name))
+                self.pyqt_change_url(self.URL_USER_HOME.format(self.current_user.name))
 
     def logout(self):
         if(self.logged_in()):
@@ -383,9 +385,9 @@ class Bot:
     def show_users(self, msg=None):
         print(get_user_list())
         if msg is None:
-            self.change_url("http://localhost/show_users")
+            self.pyqt_change_url("http://localhost/show_users")
         else:
-            self.change_url("http://localhost/show_users", msg)
+            self.pyqt_change_url("http://localhost/show_users", msg)
 
     def update_file(self):
         if self.logged_in():
@@ -416,11 +418,8 @@ class Bot:
             date_time = entities['datetime'][0]['value']
         return date_time
 
-    def change_url(self, url, message=None):
+    def pyqt_change_url(self, url, message=None):
         if message is None:
-            self.driver.get(url)
+            self.page_changed.emit(QUrl(url))
         else:
-            self.driver.get(url + '?msg=' + quote(message))
-
-    def close_browser(self):
-        self.driver.close()
+            self.page_changed.emit(QUrl(url + '?msg=' + quote(message) ))
