@@ -23,7 +23,7 @@ wit_token = tokens.WIT_ACCESS_TOKEN
 
 class Bot(QThread):
     URL_WIT = 'https://api.wit.ai/message?v=20170319&q={}'
-    URL_USER_HOME = "http://localhost/home/{}"
+    URL_USER_HOME = "http://localhost/home/{}/{}"
     URL_USER_MANAGEMENT = "http://localhost/user_management"
     URL_FORECAST = "http://localhost/forecast/{}/{}"
     URL_RESPONSE = "http://localhost/response"
@@ -77,7 +77,7 @@ class Bot(QThread):
         except Exception as e:
             # did not get the request from wit.ai
             print("REQUEST FAILED")
-            self.pyqt_change_url(self.URL_USER_HOME.format(name), 'Request to wit.ai did not work.')
+            self.pyqt_change_url(self.URL_USER_HOME.format(0, name), 'Request to wit.ai did not work.')
             return
 
         if r is not None:
@@ -85,7 +85,7 @@ class Bot(QThread):
             json_resp = json.loads(r.text)
             if 'error' in json_resp:
                 print('Authentication with wit.ai failed.')
-                self.pyqt_change_url(self.URL_USER_HOME.format(name))
+                self.pyqt_change_url(self.URL_USER_HOME.format(0, name))
                 return
             intent = self.get_intent(json_resp)
             location = self.get_location(json_resp)
@@ -94,15 +94,17 @@ class Bot(QThread):
             if intent is not None:
                 if intent == 'weather':
                     location = self.get_location(json_resp)
-                    if location is not None:
-                        self.pyqt_change_url(self.URL_FORECAST.format(location, date_time))
+                    if location or self.current_user.hometown:
+                        print(date_time)
+                        print("++++++++++++++++++++")
+                        self.pyqt_change_url(self.URL_FORECAST.format((location if location else self.current_user.hometown), date_time))
                     else:
-                        self.pyqt_change_url(self.URL_USER_HOME.format(name), "Desired text")
+                        self.pyqt_change_url(self.URL_USER_HOME.format(date_time, name), "Desired text")
                         location = self.speech()
                         if location in self.cities:
-                            self.pyqt_change_url(self.URL_USER_HOME.format(name))
+                            self.pyqt_change_url(self.URL_USER_HOME.format(date_time, name))
                         else:
-                            self.pyqt_change_url(self.URL_USER_HOME.format(name), 'I do not know of this place, sorry!')
+                            self.pyqt_change_url(self.URL_USER_HOME.format(date_time, name), 'I do not know of this place, sorry!')
                 elif intent == 'hometown':
                     self.set_user_location()
                 elif intent == 'logout':
@@ -110,7 +112,7 @@ class Bot(QThread):
                 elif intent == 'login':
                     self.login()
                 elif intent == 'greeting':
-                    self.pyqt_change_url(self.URL_USER_HOME.format(name), 'Hello yourself!')
+                    self.pyqt_change_url(self.URL_USER_HOME.format(0, name), 'Hello yourself!')
                 elif intent == 'options':
                     self.use_options()
                 elif intent == 'user_creation':
@@ -122,9 +124,9 @@ class Bot(QThread):
                 elif intent == 'shutdown':
                     exit()
             elif location is not None:
-                    self.pyqt_change_url(self.URL_USER_HOME.format(name))
+                    self.pyqt_change_url(self.URL_USER_HOME.format(0, name))
             else:
-                self.pyqt_change_url(self.URL_USER_HOME.format(name), 'I do not understand the intent of your statement.')
+                self.pyqt_change_url(self.URL_USER_HOME.format(0, name), 'I do not understand the intent of your statement.')
         
     def set_user_location(self):
         """
@@ -133,7 +135,7 @@ class Bot(QThread):
         if self.logged_in():
             if self.current_user.hometown is not None:
                 print("Your current hometown is '" + self.current_user.hometown + "'")
-            self.pyqt_change_url(self.URL_USER_HOME.format(self.current_user.name), "Telle me which town to set as your hometown.")
+            self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name), "Telle me which town to set as your hometown.")
             print('Tell me which town to set as your hometown.')
 
             command = self.speech()
@@ -145,13 +147,13 @@ class Bot(QThread):
                     if user["name"] == self.current_user.name:
                         user['hometown'] = self.current_user.hometown
                 dump_data_to_file(data, "users.json")
-                self.pyqt_change_url(self.URL_USER_HOME.format(self.current_user.name), 'Hometown successfully set to ' + self.current_user.hometown + '!')
+                self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name), 'Hometown successfully set to ' + self.current_user.hometown + '!')
                 print("Set your hometown to '" + self.current_user.hometown + "'.")
             else:
-                self.pyqt_change_url(self.URL_USER_HOME.format(self.current_user.name), "I may not know that city.")
+                self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name), "I may not know that city.")
                 print("I may not know that city.")
         else:
-            self.pyqt_change_url(self.URL_USER_HOME.format('None'), "Log in first before setting a hometown.")
+            self.pyqt_change_url(self.URL_USER_HOME.format(0, 'None'), "Log in first before setting a hometown.")
 
     def use_options(self):
         if self.logged_in():
@@ -178,7 +180,7 @@ class Bot(QThread):
 
     def user_management(self):
         if(self.logged_in()):
-            self.pyqt_change_url(self.URL_USER_HOME.format(self.current_user.name), "You are already logged in as " + self.current_user.name + ".")
+            self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name), "You are already logged in as " + self.current_user.name + ".")
             return
         else:
             self.pyqt_change_url(self.URL_USER_MANAGEMENT)
@@ -295,7 +297,7 @@ class Bot(QThread):
     def login(self, user_name=''):
         if self.current_user is not None:
             print("You are already logged in as " + self.current_user.name + ". Log out first.")
-            self.pyqt_change_url(self.URL_USER_HOME.format(self.current_user.name), "You are already logged in as " + self.current_user.name + ". Log out first.")
+            self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name), "You are already logged in as " + self.current_user.name + ". Log out first.")
         else:
             user_list = get_user_list()
             if user_list is None or len(user_list) == 0:
@@ -355,7 +357,7 @@ class Bot(QThread):
                             print("Hello " + self.current_user.name + "!\nYou are logged in now!")
 
                 
-                self.pyqt_change_url(self.URL_USER_HOME.format(self.current_user.name))
+                self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name))
 
     def logout(self):
         if(self.logged_in()):
