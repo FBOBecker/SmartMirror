@@ -1,33 +1,23 @@
 {% extends "base.html" %}
 {% block content %}
 {{ super() }}
-{% if user_name %}
-{% endif %}
 
 {{ style("css/weather-icons.css") }}
 {% if weather %}
 <div class='weather'>
-        <h1>
-            <span>Hello, {{ name }}! What can I do you for? ;)</span>
-        </h1>
         {% if weather|length != 8 %}
         <div>
-          <div>
-            Weather for {{ weather[0]['city'] }} (Last updated: {{ weather[0]['time'] }})
-
-            <p class="temperature" style="font-size: 80px">{{ weather[0]['temperature'] }}°C | <span><i class="wi wi-{{ weather[0]["icon"] }}"></i></span></p>
-
-                {% for key in weather[0]%}
-                    {% if key == "summary"%}
-                        <h1>{{ weather[0][key] }}</h1>
-                    {% elif key == "precipProbability"%}
-                        <h1>Precipitation probability: {{ weather[0][key]*100 }}%</h1>
-                    {% elif key == "windSpeed"%}
-                        <h1>Wind speed: {{ weather[0][key] }} km/h</h1>
-                    {% endif %}
-                {% endfor %}
+            Weather for <big>{{ weather[0]['city'] }}</big> (Last updated: {{ weather[0]['datetime'] }})
+            <p class="temperature" style="font-size: 80px">
+		{{ weather[0]['temperature'] }}°C | 
+		<span><i class="wi wi-{{ weather[0]["icon"] }}"></i></span>
+	    </p>
+<div id="weatherinfo">
+                        {{ weather[0]['summary'] }} &nbsp;|&nbsp;
+                        {{ weather[0]['precipProbability']*100 }}%  &nbsp; Regenicon &nbsp;|&nbsp;
+                      	Windicon &nbsp; {{ weather[0]['windSpeed'] }} km/h
+</div>
           </div>
-        </div>
         {% endif %}
         {% if weather|length > 9 %}
         <div>
@@ -52,7 +42,10 @@
           </div>
         </div>
         {% endif %}
-
+	<div id="date">
+		<big>{{ weather[0]['weekday'] }}</big><p>{{ weather[0]['date'] }}</p>
+		<p>{{ weather[0]['time'] }}</p>
+	</div>
 {% else %}
     <p>You don't have a hometown set.</p>
 {% endif %}

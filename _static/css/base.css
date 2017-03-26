@@ -10,6 +10,15 @@ body {
 	margin-top:-30px;
 }
 
+#textfield {
+position:absolute;
+top:400px;
+left:375px;
+height: 300px;
+width:415px;
+//background-color:red !important;	
+}
+
 .temperature {
   font-size: 80px;
 }
@@ -18,8 +27,8 @@ body {
 #main {
 	margin-top:50px;
 	position: relative;
-
 }
+
 
 #interact {
 	position: fixed;
@@ -36,4 +45,24 @@ body, html, div, ul, li, a, p
     position:fixed;
     top: 30%;
     left: 35%;
+}
+
+p {
+padding:0 0 0 0;
+margin: 0 0 0 0;
+line-height:30px;
+
+}
+
+#weatherinfo
+{
+	margin-top:3px;
+margin-left:2px;
+font-size:20px;
+}
+
+#date {
+	position:absolute;
+	top: 10px;
+left:1050px;
 }

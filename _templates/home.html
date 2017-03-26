@@ -1,8 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
 {{ super() }}
-<div>
-Hello, {{ user_name }}!
-What can I do you for? ;)
-</div>
+	{% block greeting %}
+		<div>
+			Hello, {{ user_name }}!
+			What can I do for you?
+		</div>
+	{% endblock %}
 {% endblock %}
