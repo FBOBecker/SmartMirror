@@ -37,7 +37,7 @@ class Bot(QThread):
         cities = get_data_from_file("cities.json")
         self.cities = cities['cities']
         self.speech = mode
-
+        self.active_url = 'http://localhost/home/'
 
     def run(self):
         """
@@ -123,10 +123,8 @@ class Bot(QThread):
                     self.show_users()
                 elif intent == 'shutdown':
                     exit()
-            elif location is not None:
-                    self.pyqt_change_url(self.URL_USER_HOME.format(0, name))
             else:
-                self.pyqt_change_url(self.URL_USER_HOME.format(0, name), 'I do not understand the intent of your statement.')
+                self.pyqt_change_url(self.active_url, 'I do not understand the intent of your statement.')
         
     def set_user_location(self):
         """
@@ -425,3 +423,4 @@ class Bot(QThread):
             self.page_changed.emit(QUrl(url))
         else:
             self.page_changed.emit(QUrl(url + '?msg=' + quote(message) ))
+        self.active_url = url
