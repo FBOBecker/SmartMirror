@@ -43,6 +43,12 @@ class Bot(QThread):
         self.cities = cities['cities']
         self.speech = mode
 
+
+    def run(self):
+        """
+        Bot running
+        """
+
         data = get_data_from_file("last_use.json")
         if data is not None:
             if 'name' in data:
@@ -53,11 +59,6 @@ class Bot(QThread):
             f.close()
             self.pyqt_change_url(self.URL_USER_MANAGEMENT)
             self.user_management()
-
-    def run(self):
-        """
-        Bot running
-        """
         while True:
             sleep(0.1)
             try:
@@ -290,6 +291,7 @@ class Bot(QThread):
 
                     print('User ' + user_name + ' deleted!')
                     msg = 'User ' + user_name + ' deleted!'
+                    self.pyqt_change_url(self.URL_USER_MANAGEMENT, msg)
                 else:
                     msg = 'Did not delete the user'
                     self.pyqt_change_url(self.URL_USER_MANAGEMENT, msg)
