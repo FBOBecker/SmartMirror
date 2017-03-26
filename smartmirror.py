@@ -27,6 +27,7 @@ class Bot(QThread):
     URL_USER_MANAGEMENT = "http://localhost/user_management"
     URL_FORECAST = "http://localhost/forecast/{}/{}"
     URL_RESPONSE = "http://localhost/response"
+    URL_SLEEP = "http://localhost/sleep"
 
     page_changed = pyqtSignal(QUrl)
 
@@ -126,6 +127,34 @@ class Bot(QThread):
                     self.delete_user()
                 elif intent == 'user_show':
                     self.show_users()
+                elif intent == 'mirror':
+                    self.pyqt_change_url(self.URL_RESPONSE,"See you later.")
+                    self.pyqt_change_url(self.URL_SLEEP)
+                    while True:
+                        try:
+                            command = self.speech()
+                            r = None
+                            try:
+                                r = requests.get(self.URL_WIT.format(command), 
+                                    headers={"Authorization": wit_token})
+                            except Exception as e:
+                                # did not get the request from wit.ai
+                                print("REQUEST FAILED")
+                                self.pyqt_change_url(self.URL_USER_HOME.format(0, name), 'Request to wit.ai did not work.')
+                                return
+
+                            if r is not None:
+                                print(r.text)
+                                json_resp = json.loads(r.text)
+                                if 'error' in json_resp:
+                                    print('Authentication with wit.ai failed.')
+                                    self.pyqt_change_url(self.URL_USER_HOME.format(0, name))
+                                    return
+                                intent = self.get_intent(json_resp)
+                                if intent == 'wake up':
+                                    return self.run()
+                        except Exception as e:
+                            pass
                 elif intent == 'shutdown':
                     exit()
             else:
