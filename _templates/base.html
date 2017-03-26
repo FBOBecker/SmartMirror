@@ -9,8 +9,25 @@
     <!-- Bootstrap -->
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     {{ style("css/bootstrap.min.css") }}
+    <script>
+        function startTime() {
+            var currentTime = new Date();
+            var h = currentTime.getHours();
+            var m = currentTime.getMinutes();
+            var s = currentTime.getSeconds();
+            m = checkTime(m);
+            s = checkTime(s);
+            document.getElementById('time').innerHTML =
+            h + ":" + m + ":" + s;
+            var t = setTimeout(startTime, 500);
+        }
+        function checkTime(i) {
+            if (i < 10) {i = "0" + i};  // add zero in front of numbers < 10
+            return i;
+        }
+    </script>
 </head>
-<body>
+<body onload="startTime()">
     {% with messages = get_flashed_messages() %}
         {% if messages %}
         <ul>
@@ -20,7 +37,7 @@
         </ul>
         {% endif %}
     {% endwith %}
-    <div id="time">{{ now }}</div>
+    <div id="time"></div>
     <div id="main">
             {% block content %}
             {% if request.args.get('msg') %}
