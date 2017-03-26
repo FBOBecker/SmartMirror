@@ -19,20 +19,6 @@ WEEKDAYS = {0: "Monday", 1: "Tuesday", 2: "Wednesday", 3: "Thursday", 4: "Friday
 def inject_now():
     name = None
     hometown = None
-    today = datetime.today().timetuple()
-    date = str(today[2]) + '.' + str(today[1]) + '.' + str(today[0])
-    time = str(today[3]) + ':' + str(today[4])
-    weekday = WEEKDAYS[today[6]]
-    time_icon = None
-    if 8 < today[3] < 15:
-        time_icon = "sunrise"
-    elif 15 < today[3] < 21:
-        time_icon = "sunset"
-    elif 21 < today[3]:
-        time_icon = "moonrise"
-        print("Moonrise")
-    elif today[3] < 8:
-        time_icon = "moonset"
     data = get_data_from_file('users.json')
     if data is not None:
         for user in data['users']:
@@ -40,7 +26,7 @@ def inject_now():
                 name = user['name']
                 hometown = user['hometown']
 
-    return {'date': date, 'time': time, 'weekday': weekday, 'time_icon':time_icon, 'name': name, 'hometown': hometown}
+    return {'now': datetime.utcnow(), 'name': name, 'hometown': hometown}
 
 
 @main.route("/home/")
@@ -61,7 +47,7 @@ def home(date_time=0, user=None):
 
 @main.route("/response")
 def response():
-    return render_template("response.html")
+    return render_template("response.html", name=None)
 
 
 @main.route("/user_management")
@@ -80,13 +66,14 @@ def forecast(city, date_time):
     weather_params = get_weather(city, date_time)
     return render_template("forecast.html", weather=weather_params)
 
-
 @main.route("/sleep")
 def sleep():
     return render_template("sleep.html", name=None)
 
 
 def get_weather(city, date_time=0):
+    print(date_time)
+    print('------------------------------------------')
     if date_time == '0' or date_time == 'None':
         date_time = 0
 
@@ -107,6 +94,7 @@ def get_weather(city, date_time=0):
         for key, value in dict.items():
             if key == "time":
                 dict[key] = datetime.fromtimestamp(int(dict[key])).strftime('%Y-%m-%d %H:%M:%S')
+                print(type(dict[key]))
             if key == "temperature" or key == "temperatureMin" or key == "temperatureMax":
                 dict[key] = "{0:.1f}".format(((dict[key] - 32) * 5 / 9))
             if key == "icon":
@@ -114,6 +102,6 @@ def get_weather(city, date_time=0):
         dict['weekday'] = WEEKDAYS[dateutil.parser.parse(dict['time']).weekday()]
         dict['hour'] = dateutil.parser.parse(dict['time']).hour
 
-    # print(weather_obj)
+    print(weather_obj)
     weather_obj[0]['city'] = city
     return weather_obj

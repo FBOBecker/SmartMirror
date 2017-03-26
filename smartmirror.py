@@ -129,7 +129,9 @@ class Bot(QThread):
                     self.show_users()
                 elif intent == 'mirror':
                     self.pyqt_change_url(self.URL_RESPONSE,"See you later.")
+                    sleep(1)
                     self.pyqt_change_url(self.URL_SLEEP)
+                    self.update_file()
                     while True:
                         try:
                             command = self.speech()
@@ -459,5 +461,5 @@ class Bot(QThread):
             self.page_changed.emit(QUrl(url))
         else:
             self.page_changed.emit(QUrl(url + '?msg=' + quote(message) ))
-            self.message = True
+        self.message = True
         self.active_url = url
