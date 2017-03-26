@@ -29,9 +29,9 @@ def inject_now():
     return {'now': datetime.utcnow(), 'name': name, 'hometown': hometown}
 
 
-@main.route("/home")
-@main.route("/home/<string:user>")
-def home(user=None):
+@main.route("/home/")
+@main.route("/home/<string:date_time>/<string:user>")
+def home(date_time=0, user=None):
     if user is None:
         return render_template("user_management.html")
     else:
@@ -41,7 +41,7 @@ def home(user=None):
             if u['name'] == user:
                 city = u['hometown']
                 if city is not None:
-                    weather_params = get_weather(city)
+                    weather_params = get_weather(city, date_time)
         return render_template("forecast.html", weather=weather_params)
 
 
@@ -68,14 +68,17 @@ def forecast(city, date_time):
 
 
 def get_weather(city, date_time=0):
-    print(type(date_time))
+    print(date_time)
     print('------------------------------------------')
-    if date_time != 'None' and date_time != 0:
+    if date_time == '0' or date_time == 'None':
+        date_time = 0
+
+    if date_time != 0:
         date_time = dateutil.parser.parse(date_time)
         time_dif = abs((date_time - datetime.now(timezone.utc)).total_seconds())
         if time_dif < timedelta(hours=1).total_seconds():
             date_time = 0
-        elif time_dif < timedelta(hours=24).total_seconds():
+        elif time_dif < timedelta(hours=12).total_seconds():
             date_time = 1
         else:
             date_time = 2
@@ -88,7 +91,7 @@ def get_weather(city, date_time=0):
             if key == "time":
                 dict[key] = datetime.fromtimestamp(int(dict[key])).strftime('%Y-%m-%d %H:%M:%S')
                 print(type(dict[key]))
-            if key == "temperature" or key =="temperatureMin" or key == "temperatureMax":
+            if key == "temperature" or key == "temperatureMin" or key == "temperatureMax":
                 dict[key] = "{0:.1f}".format(((dict[key] - 32) * 5 / 9))
             if key == "icon":
                 dict[key] = ICONS[dict[key]]
