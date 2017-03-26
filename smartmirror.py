@@ -37,7 +37,7 @@ class Bot(QThread):
         cities = get_data_from_file("cities.json")
         self.cities = cities['cities']
         self.speech = mode
-        self.active_url = ''
+        self.active_url = 'http://localhost/home/'
 
     def run(self):
         """
@@ -125,7 +125,6 @@ class Bot(QThread):
                     exit()
             else:
                 self.pyqt_change_url(self.active_url, 'I do not understand the intent of your statement.')
-
         
     def set_user_location(self):
         """
