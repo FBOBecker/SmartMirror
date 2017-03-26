@@ -7,10 +7,7 @@ except ImportError:
     import sys
     sys.exit(0)
 
-import os
 import json
-import sys
-from datetime import datetime
 from user import *
 from util import *
 from weather import Weather
@@ -19,19 +16,17 @@ from urllib.parse import quote
 
 import requests
 
-from wit import wit
-
 from selenium import webdriver
 
 weather_api_token = tokens.WEATHER_API_TOKEN
 wit_token = tokens.WIT_ACCESS_TOKEN
 
 
-class Bot():
+class Bot:
     URL_WIT = 'https://api.wit.ai/message?v=20170319&q={}'
     URL_USER_HOME = "http://localhost/home/{}"
     URL_USER_MANAGEMENT = "http://localhost/user_management"
-    URL_FORECAST = "http://localhost/forecast/{}"
+    URL_FORECAST = "http://localhost/forecast/{}/{}"
     URL_RESPONSE = "http://localhost/response"
 
     def __init__(self, mode=write):
@@ -93,12 +88,13 @@ class Bot():
                 return
             intent = self.get_intent(json_resp)
             location = self.get_location(json_resp)
+            date_time = self.get_datetime(json_resp)
 
             if intent is not None:
                 if intent == 'weather':
                     location = self.get_location(json_resp)
-                    if location is not  None:
-                        self.change_url(self.URL_FORECAST.format(location))
+                    if location is not None:
+                        self.change_url(self.URL_FORECAST.format(location, date_time))
                     else:
                         self.change_url(self.URL_USER_HOME.format(name), "Desired text")
                         location = self.speech()
@@ -127,7 +123,7 @@ class Bot():
             elif location is not None:
                     self.change_url(self.URL_USER_HOME.format(name))
             else:
-                self.change_url(self.URL_USER_HOME.format(name), 'I do not understand the intend of your statement.')
+                self.change_url(self.URL_USER_HOME.format(name), 'I do not understand the intent of your statement.')
         
     def set_user_location(self):
         """
@@ -412,6 +408,13 @@ class Bot():
             entities = json_wit['entities']
             location = entities['location'][0]['value']
         return location
+
+    def get_datetime(self, json_wit):
+        date_time = None
+        if 'entities' in json_wit and 'datetime' in json_wit['entities']:
+            entities = json_wit['entities']
+            date_time = entities['datetime'][0]['value']
+        return date_time
 
     def change_url(self, url, message=None):
         if message is None:

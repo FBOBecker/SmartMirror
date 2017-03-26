@@ -13,7 +13,7 @@ class Weather:
     def __init__(self, weather_api_token):
         self.weather_url = self.WEATHER_URL.format(weather_api_token)
 
-    def find_weather(self, city):
+    def find_weather(self, city, time):
         loc_obj = self.get_coordinates(city)
 
         lat = loc_obj['lat']
@@ -30,16 +30,13 @@ class Weather:
             dump_data_to_file(weather_json, "weather.json")
             set_cache_entry(key, weather_json)
 
-        temperature = int(weather_json['currently']['temperature'])
-        current_forecast = weather_json['currently']['summary']
-        hourly_forecast = weather_json['hourly']['summary']
-        daily_forecast = weather_json['daily']['summary']
-        icon = weather_json['currently']['icon']
-        wind_speed = int(weather_json['currently']['windSpeed'])
-
-        return {'temperature': temperature, 'icon': icon, 'windSpeed': wind_speed,
-                'current_forecast': current_forecast, 'hourly_forecast': hourly_forecast,
-                'daily_forecast': daily_forecast}
+        if time == 0:
+            return [weather_json['currently']]
+        elif time == 1:
+            weather = [weather_json['currently']] + weather_json['hourly']['data']
+            return weather
+        else:
+            return weather_json['daily']['data']
 
     def get_coordinates(self, city='Berlin'):
         key = 'loc' + city

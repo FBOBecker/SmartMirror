@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 import tokens
-from datetime import datetime
-from flask import Blueprint, abort, flash, redirect, render_template, request
+from flask import Blueprint, render_template
 from weather import Weather
 from util import *
-from datetime import datetime
-import os.path
+from datetime import datetime, timedelta, timezone
+import dateutil.parser
 main = Blueprint("main", __name__)
 weather_api_token = tokens.WEATHER_API_TOKEN
 
 ICONS = {"clear-day": "day-sunny", "clear-night": "night-clear", "rain": "rain", "snow": "snow", "sleet": "sleet",
          "wind": "strong-wind", "fog": "fog", "cloudy": "cloudy", "partly-cloudy-day": "day-cloudy",
          "partly-cloudy-night": "night-cloudy"}
+
+WEEKDAYS = {0: "Monday", 1: "Tuesday", 2: "Wednesday", 3: "Thursday", 4: "Friday", 5: "Saturday", 6: "Sunday"}
 
 
 @main.context_processor
@@ -60,28 +61,40 @@ def show_users():
     return render_template("show_users.html", users=user_list)
 
 
-@main.route("/forecast/<string:city>", methods=["GET","POST"])
-def forecast(city):
-    weather_params = get_weather(city)
-
-    return render_template("forecast.html", city=city, weather=weather_params)
-
-
-@main.route("/weather")
-def weather():
-    return "GOOD FUCKING JOB!"
+@main.route("/forecast/<string:city>/<string:date_time>")
+def forecast(city, date_time):
+    weather_params = get_weather(city, date_time)
+    return render_template("forecast.html", weather=weather_params)
 
 
-def get_weather(city):
+def get_weather(city, date_time=0):
+    print(type(date_time))
+    print('------------------------------------------')
+    if date_time != 'None' and date_time != 0:
+        date_time = dateutil.parser.parse(date_time)
+        time_dif = abs((date_time - datetime.now(timezone.utc)).total_seconds())
+        if time_dif < timedelta(hours=1).total_seconds():
+            date_time = 0
+        elif time_dif < timedelta(hours=24).total_seconds():
+            date_time = 1
+        else:
+            date_time = 2
+
     weather = Weather(weather_api_token)
-    cities = get_data_from_file("cities.json")
-    cities = cities['cities']
-    current_dtime = datetime.now()
-    weather_obj = weather.find_weather(city)
-    temperature = weather_obj['temperature']
-    temperature = (temperature - 32) * 5 / 9
-    temperature = "{0:.1f}".format(temperature)
-    icon = weather_obj['icon']
-    wind_speed = weather_obj['windSpeed']
+    weather_obj = weather.find_weather(city, date_time)
 
-    return {'City': city, 'Temperature': temperature, 'Windspeed': wind_speed, 'Icon': ICONS[icon]}
+    for dict in weather_obj:
+        for key, value in dict.items():
+            if key == "time":
+                dict[key] = datetime.fromtimestamp(int(dict[key])).strftime('%Y-%m-%d %H:%M:%S')
+                print(type(dict[key]))
+            if key == "temperature" or key =="temperatureMin" or key == "temperatureMax":
+                dict[key] = "{0:.1f}".format(((dict[key] - 32) * 5 / 9))
+            if key == "icon":
+                dict[key] = ICONS[dict[key]]
+        dict['weekday'] = WEEKDAYS[dateutil.parser.parse(dict['time']).weekday()]
+        dict['hour'] = dateutil.parser.parse(dict['time']).hour
+
+    print(weather_obj)
+    weather_obj[0]['city'] = city
+    return weather_obj

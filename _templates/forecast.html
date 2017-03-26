@@ -5,24 +5,53 @@
 {% endif %}
 
 {{ style("css/weather-icons.css") }}
+{% if weather %}
 <div class='weather'>
         <h1>
             <span class="label label-default">Hello, {{ name }}! What can I do you for? ;)</span>
         </h1>
-        {% if weather %}
+        {% if weather|length != 8 %}
         <div class="panel panel-default">
           <div class="panel-body">
-            Wetter für {{ weather['City'] }}
+            Weather for {{ weather[0]['city'] }} (Last updated: {{ weather[0]['time'] }})
 
-            <p class="temperature" style="font-size: 80px">{{ weather['Temperature'] }}°C | <span><i class="wi wi-{{ weather["Icon"] }}"></i></span> {{ weather["Icon"] }}</p>
+            <p class="temperature" style="font-size: 80px">{{ weather[0]['temperature'] }}°C | <span><i class="wi wi-{{ weather[0]["icon"] }}"></i></span></p>
 
-                {% for key in weather%}
-                    {% if key != "Icon"%}
-                        <h1>{{ key }}: {{ weather[key] }}</h1>
+                {% for key in weather[0]%}
+                    {% if key == "summary"%}
+                        <h1>Summary: {{ weather[0][key] }}</h1>
+                    {% elif key == "precipProbability"%}
+                        <h1>Precipitation probability: {{ weather[0][key]*100 }}%</h1>
+                    {% elif key == "windSpeed"%}
+                        <h1>Wind speed: {{ weather[0][key] }} km/h</h1>
                     {% endif %}
                 {% endfor %}
           </div>
         </div>
+        {% endif %}
+        {% if weather|length > 9 %}
+        <div class="panel panel-default">
+          <div class="panel-body">
+           <h1>Hourly forecast for the next 12 hours in {{ weather[0]['city'] }}</h1>
+              <br>
+                {% for dict in weather[1:13]%}
+                        <h1>{{ dict['hour'] }}:00 | {{ dict['temperature'] }}°C | <span><i class="wi wi-{{ dict["icon"] }}"></i></span></h1>
+                {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+        {% if weather|length == 8 %}
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <h1>Daily forecast for {{ weather[0]['city'] }}</h1>
+              <br>
+
+                {% for dict in weather%}
+                        <h1 class="col-sm-4">{{ dict['weekday'] }}</h1> <h1 class="col-sm-4"> {{ dict['temperatureMin'] }}° / {{ dict['temperatureMax'] }}° </h1><h1 class="col-sm-4"><span><i class="wi wi-{{ dict["icon"] }}"></i></span></h1>
+                {% endfor %}
+          </div>
+        </div>
+        {% endif %}
 
 {% else %}
     <p>You don't have a hometown set.</p>
