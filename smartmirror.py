@@ -30,6 +30,7 @@ class Bot(QThread):
     URL_RESPONSE = "http://localhost/response"
     URL_LOCATION = "http://localhost/location/{}/{}"
     URL_SPELL = "http://localhost/spell/{}"
+    URL_SLEEP = "http://localhost/sleep"
 
     page_changed = pyqtSignal(QUrl)
 
@@ -41,6 +42,7 @@ class Bot(QThread):
         self.cities = cities['cities']
         self.speech = mode
         self.active_url = 'http://localhost/home/'
+        self.message = False
 
     def run(self):
         """
@@ -50,15 +52,19 @@ class Bot(QThread):
         data = get_data_from_file("last_use.json")
         if data is not None:
             if 'name' in data:
-                self.login(data['name'])
+                self.login(data['name'], "I'm listening...")
                 print("Welcome back, " + self.current_user.name + "!")
         else:
             f = open("last_use.json", "w+")
             f.close()
-            self.pyqt_change_url(self.URL_USER_MANAGEMENT)
+            self.pyqt_change_url(self.URL_USER_MANAGEMENT, "I'm listening...")
             self.user_management()
         while True:
-            sleep(0.1)
+            sleep(2.5)
+
+            if self.message:
+                self.pyqt_change_url(self.active_url, "I'm listening...")
+                self.message = False
             try:
                 command = self.speech()
             except Exception as e:
@@ -153,20 +159,50 @@ class Bot(QThread):
                     self.login()
 
                 elif intent == 'greeting':
-                    self.pyqt_change_url(self.URL_USER_HOME.format(0, name), random.choice(['Hello yourself!',
-                                                                                            'Hi there!', 'Hi!', 'Hola!',
-                                                                                            'Greetings!']))
+                    self.pyqt_change_url(self.active_url, random.choice(['Hello yourself!',
+                                                                                            'Hi there!', 'Hi!', 'Hola!',                                                                   'Greetings!']))
                 elif intent == 'options':
                     self.use_options()
+
                 elif intent == 'user_creation':
-                    if not self.current_user:
                         self.create_new_user()
-                    else:
-                        self.pyqt_change_url(self.active_url, 'You are already logged in as ' + self.current_user.name)
+
                 elif intent == 'user_deletion':
                     self.delete_user()
+
                 elif intent == 'user_show':
                     self.show_users()
+
+                elif intent == 'mirror':
+                    self.pyqt_change_url(self.URL_RESPONSE,"See you later.")
+                    sleep(1)
+                    self.pyqt_change_url(self.URL_SLEEP)
+                    self.update_file()
+                    while True:
+                        try:
+                            command = self.speech()
+                            r = None
+                            try:
+                                r = requests.get(self.URL_WIT.format(command),
+                                    headers={"Authorization": wit_token})
+                            except Exception as e:
+                                # did not get the request from wit.ai
+                                print("REQUEST FAILED")
+                                self.pyqt_change_url(self.URL_USER_HOME.format(0, name), 'Request to wit.ai did not work.')
+                                return
+
+                            if r is not None:
+                                print(r.text)
+                                json_resp = json.loads(r.text)
+                                if 'error' in json_resp:
+                                    print('Authentication with wit.ai failed.')
+                                    self.pyqt_change_url(self.URL_USER_HOME.format(0, name))
+                                    return
+                                intent = self.get_intent(json_resp)
+                                if intent == 'wake up':
+                                    return self.run()
+                        except Exception as e:
+                            pass
                 elif intent == 'shutdown':
                     exit()
                 elif intent == 'fairytale':
@@ -259,8 +295,11 @@ class Bot(QThread):
 
     """
     def create_new_user(self, new_user=''):
+        if self.current_user is not None:
+            print("You are already logged in as " + self.current_user.name + ". Log out first.")
+            self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name), "You are already logged in as " + self.current_user.name + ". Log out first.")
 
-        if not new_user == '':
+        elif not new_user == '':
             self.current_user = User()
             self.current_user.name = new_user
             self.current_user.hometown = ''
@@ -370,7 +409,7 @@ class Bot(QThread):
                     msg = 'Did not delete the user'
                     self.pyqt_change_url(self.URL_USER_MANAGEMENT, msg)
 
-    def login(self, user_name=''):
+    def login(self, user_name='', message=None):
         if self.current_user is not None:
             print("You are already logged in as " + self.current_user.name + ". Log out first.")
             self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name), "You are already logged in as "
@@ -434,7 +473,10 @@ class Bot(QThread):
                             dump_data_to_file(data, 'users.json')
                             print("Hello " + self.current_user.name + "!\nYou are logged in now!")
 
-                self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name))
+                if message is not None:
+                    self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name), message)
+                else:
+                    self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name))
 
     def logout(self):
         if(self.logged_in()):
@@ -501,7 +543,8 @@ class Bot(QThread):
         if message is None:
             self.page_changed.emit(QUrl(url))
         else:
-            self.page_changed.emit(QUrl(url + '?msg=' + quote(message)))
+            self.page_changed.emit(QUrl(url + '?msg=' + quote(message) ))
+            self.message = True
         self.active_url = url
 
     def spell_word(self):

@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
 {{ super() }}
-<div>
+<div id='textfield'>
 {% if users %}
 <ul>
 {% for user in users %}
-  <li>{{ user }}</li>
+  <li style="list-style-type:none"><p style="margin:0;padding:0;font-size:30px;">{{ user }}</p></li>
   {% endfor %}
 </ul>
 {% else %}

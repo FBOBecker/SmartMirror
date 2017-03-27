@@ -21,12 +21,24 @@
 <div id="time">{{ now }}</div>
     <div id="main">
             {% block content %}
+{% if name %}
+	<div id="textfield">
+		<h1>
+		Hello, {{ name }}!
+		What can I do for you?
+		<h1>
+	</div>	
+{% endif %}
             {% if request.args.get('msg') %}
             <div id="interact">
                 {{ request.args.get('msg') }}
             </div>
             {% endif %}
             {% endblock %}
+                <div id="date">
+        <big>{{ weekday }}</big><p>{{ date }}</p>
+        <p>{{ time }}{% if time_icon %}&nbsp;<span><i class="wi wi-{{ time_icon }}"></i></span>{% endif %}</p>
+    </div>
     </div>
 </div>
 </body>
