@@ -26,17 +26,21 @@ def inject_now():
     hometown = None
     today = datetime.today().timetuple()
     date = str(today[2]) + '.' + str(today[1]) + '.' + str(today[0])
-    time = str(today[3]) + ':' + str(today[4])
+    minute = str(today[4])
+    if (len(minute) == 1):
+        minute = '0' + minute
+    hour = today[3] + 2
+    time = str(hour) + ':' + minute
     weekday = WEEKDAYS[today[6]]
     time_icon = None
-    if 8 < today[3] < 15:
+    if 8 < hour < 15:
         time_icon = "sunrise"
-    elif 15 < today[3] < 21:
+    elif 15 < hour < 21:
         time_icon = "sunset"
-    elif 21 < today[3]:
+    elif 21 < hour:
         time_icon = "moonrise"
         print("Moonrise")
-    elif today[3] < 8:
+    elif hour < 8:
         time_icon = "moonset"
     data = get_data_from_file('users.json')
     if data is not None:
