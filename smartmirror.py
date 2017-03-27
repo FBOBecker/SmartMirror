@@ -60,8 +60,9 @@ class Bot(QThread):
             self.pyqt_change_url(self.URL_USER_MANAGEMENT, "I'm listening...")
             self.user_management()
         while True:
-            sleep(2.5)
-
+            sleep(2)
+            if "http://localhost/location/" in self.active_url:
+                sleep(13)
             if self.message:
                 self.pyqt_change_url(self.active_url, "I'm listening...")
                 self.message = False
@@ -119,7 +120,10 @@ class Bot(QThread):
 
                 elif intent == "direction":
                     t_type = None
-                    location = self.get_location(json_resp)
+                    try:
+                        location = self.get_location(json_resp)
+                    except Exception as e:
+                        return
                     self.pyqt_change_url(self.active_url,
                                          '1. Directions to ' + location + '\n2. Try new destination with spell mode')
                     while 1:
@@ -131,8 +135,8 @@ class Bot(QThread):
                             break
                     while not t_type:
                         self.pyqt_change_url(self.active_url,
-                                             'Please choose the type of transportation:\n1. public transportation\n2. '
-                                             'by foot\n3. by car\n4. bicycle')
+                                             'Means of transportation: 1.Public Transport 2.'
+                                             'By foot 3.By car 4.Bicycle')
                         command = self.speech()
                         if command in ["one", "public", "public transportation"]:
                             t_type = "r"
@@ -359,54 +363,63 @@ class Bot(QThread):
             sleep(3)
             self.pyqt_change_url(self.URL_USER_MANAGEMENT)
         else:
-            print("Which user do you want to remove?")
-            self.show_users("Which user do you want to remove?")
-            command = self.speech()
-            print("You said " + command)
+            in_deletion = True
+            while in_deletion:
+                print("Which user do you want to remove?")
+                self.show_users("Which user do you want to remove?")
+                command = self.speech()
+                print("You said " + command)
 
-            command_list = []
-            user_match = {}
+                command_list = []
+                user_match = {}
 
-            count = 1
-            for i in user_list:
-                command_list.append(number_conversion(count))
-                command_list.append(i)
-                user_match[number_conversion(count)] = i
-                count += 1
-
-            print("numbers:", command_list)
-            print("NAMES:", user_match)
-            if any(command in w for w in command_list):
-                if command in user_match.keys():
-                    user_to_delete = user_match[command]
-                else:
-                    user_to_delete = command
-
-                user_data = get_data_from_file("users.json")
-                user_list = user_data['users']
-
-                item_index = next(index for (index, user) in enumerate(user_list) if user['name'] == user_to_delete)
-                
-                user_name = user_list[item_index]['name']
-                print('Are you sure you want to delete ' + user_name + '?')
-                self.pyqt_change_url(self.URL_RESPONSE, 'Are you sure you want to delete ' + user_name + '?')
-                approval_command = self.speech()
-
-                if any(approval_command in w for w in APPROVAL_LIST):
-                    del user_list[item_index]
-
-                    if len(user_list) == 0:
-                        os.remove('users.json')
+                count = 1
+                for i in user_list:
+                    if number_conversion(count) is not None:
+                        command_list.append(number_conversion(count))
+                        key = number_conversion(count)
                     else:
-                        user_data['users'] = user_list
-                        dump_data_to_file(user_data, "users.json")
+                        command_list.append(str(count))
+                        key = str(count)
+                    command_list.append(i)
+                    user_match[key] = i
+                    count += 1
 
-                    print('User ' + user_name + ' deleted!')
-                    msg = 'User ' + user_name + ' deleted!'
-                    self.pyqt_change_url(self.URL_USER_MANAGEMENT, msg)
-                else:
-                    msg = 'Did not delete the user'
-                    self.pyqt_change_url(self.URL_USER_MANAGEMENT, msg)
+                print("numbers:", command_list)
+                print("NAMES:", user_match)
+                if any(command in w for w in command_list):
+                    if command in user_match.keys():
+                        user_to_delete = user_match[command]
+                    else:
+                        user_to_delete = command
+
+                    user_data = get_data_from_file("users.json")
+                    user_list = user_data['users']
+
+                    item_index = next(index for (index, user) in enumerate(user_list) if user['name'] == user_to_delete)
+                    
+                    user_name = user_list[item_index]['name']
+                    print('Are you sure you want to delete ' + user_name + '?')
+                    self.pyqt_change_url(self.URL_RESPONSE, 'Are you sure you want to delete ' + user_name + '?')
+                    approval_command = self.speech()
+
+                    if any(approval_command in w for w in APPROVAL_LIST):
+                        del user_list[item_index]
+
+                        if len(user_list) == 0:
+                            os.remove('users.json')
+                        else:
+                            user_data['users'] = user_list
+                            dump_data_to_file(user_data, "users.json")
+
+                        print('User ' + user_name + ' deleted!')
+                        msg = 'User ' + user_name + ' deleted!'
+                        self.pyqt_change_url(self.URL_USER_MANAGEMENT, msg)
+                        in_deletion = False
+                    else:
+                        msg = 'Did not delete the user'
+                        self.pyqt_change_url(self.URL_USER_MANAGEMENT, msg)
+                        in_deletion = False
 
     def login(self, user_name='', message=None):
         if self.current_user is not None:
@@ -435,22 +448,24 @@ class Bot(QThread):
                             dump_data_to_file(user_data, 'users.json')
                 else:
                     while(not(self.logged_in())):
-                        print("Select your Profile from the following list of users by saying the Name or Number:")
                         self.show_users("Select your Profile from the list of users by saying the Name or Number:")
-
                         command = self.speech()
-                        print("You said " + command)
 
                         command_list = []
                         user_match = {}
 
                         count = 1
                         for i in user_list:
-                            command_list.append(number_conversion(count))
+                            if number_conversion(count) is not None:
+                                command_list.append(number_conversion(count))
+                                key = number_conversion(count)
+                            else:
+                                command_list.append(str(count))
+                                key = str(count)
                             command_list.append(i)
-                            user_match[number_conversion(count)] = i
+                            user_match[key] = i
                             count += 1
-
+                            
                         if any(command in w for w in command_list):
                             self.current_user = User()
                             if command in user_match.keys():

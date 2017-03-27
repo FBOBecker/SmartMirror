@@ -12,10 +12,10 @@ body {
 
 #textfield {
 position:absolute;
-top:400px;
-left:375px;
-height: 300px;
-width:415px;
+top:660px;
+right:50px;
+height: 100px;
+width:200px;
 //background-color:red !important;	
 }
 
