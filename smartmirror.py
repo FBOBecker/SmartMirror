@@ -61,7 +61,8 @@ class Bot(QThread):
             self.user_management()
         while True:
             sleep(2)
-
+            if "http://localhost/location/" in self.active_url:
+                sleep(13)
             if self.message:
                 self.pyqt_change_url(self.active_url, "I'm listening...")
                 self.message = False
@@ -120,7 +121,10 @@ class Bot(QThread):
 
                 elif intent == "direction":
                     t_type = None
-                    location = self.get_location(json_resp)
+                    try:
+                        location = self.get_location(json_resp)
+                    except Exception as e:
+                        return
                     self.pyqt_change_url(self.active_url,
                                          '1. Directions to ' + location + '\n2. Try new destination with spell mode')
                     while 1:
@@ -132,8 +136,8 @@ class Bot(QThread):
                             break
                     while not t_type:
                         self.pyqt_change_url(self.active_url,
-                                             'Please choose the type of transportation:\n1. public transportation\n2. '
-                                             'by foot\n3. by car\n4. bicycle')
+                                             'Means of transportation: 1.Public Transport 2.'
+                                             'By foot 3.By car 4.Bicycle')
                         command = self.speech()
                         if command in ["one", "public", "public transportation"]:
                             t_type = "r"
