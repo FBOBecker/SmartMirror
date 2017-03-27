@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
 {{ super() }}
-<div id='textfield'>
+<div id='user_message'>
 {% if users %}
-<ul>
+<ol>
 {% for user in users %}
-  <li style="list-style-type:none"><p style="margin:0;padding:0;font-size:30px;">{{ user }}</p></li>
+  <li><p style="margin:0;padding:0;font-size:30px;">{{ user }}</p></li>
   {% endfor %}
-</ul>
+</ol>
 {% else %}
 <p>There are no Users to choose from.</p>
 {% endif %}

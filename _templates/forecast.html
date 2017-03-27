@@ -2,7 +2,6 @@
 {% block content %}
 {{ super() }}
 
-{{ style("css/weather-icons.css") }}
 {% if weather %}
 <div class='weather'>
         {% if weather|length != 8 %}
