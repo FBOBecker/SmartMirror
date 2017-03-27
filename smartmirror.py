@@ -118,7 +118,7 @@ class Bot(QThread):
                 elif intent == 'login':
                     self.login()
                 elif intent == 'greeting':
-                    self.pyqt_change_url(self.URL_USER_HOME.format(0, name), 'Hello yourself!')
+                    self.pyqt_change_url(self.active_url, 'Hello yourself!')
                 elif intent == 'options':
                     self.use_options()
                 elif intent == 'user_creation':
@@ -224,7 +224,10 @@ class Bot(QThread):
 
     """
     def create_new_user(self, new_user=''):
-
+        if self.current_user is not None:
+            print("You are already logged in as " + self.current_user.name + ". Log out first.")
+            self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name), "You are already logged in as " + self.current_user.name + ". Log out first.")
+        else:
         if not new_user == '':
             self.current_user = User()
             self.current_user.name = new_user
