@@ -31,6 +31,7 @@ class Bot(QThread):
     URL_LOCATION = "http://localhost/location/{}/{}"
     URL_SPELL = "http://localhost/spell/{}"
     URL_SLEEP = "http://localhost/sleep"
+    URL_OPTIONS ="http://localhost/options"
 
     page_changed = pyqtSignal(QUrl)
 
@@ -263,9 +264,7 @@ class Bot(QThread):
 
     def use_options(self):
         if self.logged_in():
-            self.pyqt_change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown,
-                                                           "You can ask me for the weather, set your hometown, "
-                                                           "manage your hobbies or log out."))
+            self.pyqt_change_url(self.URL_OPTIONS)
         else:
             self.user_management()
 

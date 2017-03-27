@@ -105,6 +105,10 @@ def spell(word=""):
 def sleep():
     return render_template("sleep.html", name=None)
 
+@main.route("/options")
+def options():
+    return render_template("/options.html", name=None)
+
 
 def get_weather(city, date_time=0):
     if date_time == '0' or date_time == 'None':

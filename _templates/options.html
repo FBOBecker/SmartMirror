@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+{{ super() }}
+<div id="user_message">
+<h1>Here's what you can ask/tell me:</h1>
+<ul>
+<li>
+Ask me for the weather at a location to a time.
+</li>
+<li>
+Set a hometown.
+</li>
+<li>
+Logout.
+</li>
+<li>
+Shutdown.
+</li>
+<li>
+Ask me for directions starting from where we are.
+</li>
+<li>
+Tell me to <i style="text-decoration: underline">only</i> be a mirror. Remember to wake me up again!
+</li>
+</ul>
+</div>
+{% endblock %}

@@ -7,16 +7,10 @@
             <span style="margin-left:350px">[SPELL MODE]</span>
         </h1>
 <div style="margin-left:150px; width:700px">
-        <ol>
-            {% for key, value in letter.items() %}
-            <li>{{ letter[key] }}</li>
-            {% endfor %}
-        </ol>
-        <h3>Your word so far: {{ word }}</h3>
 
-        <!--<h2>Choose the letter by saying the matching number. Say 'done', 'stop' or 'enter' to confirm the current word.</h2>
+        <h2>Choose the letter by saying the matching number. Say 'done', 'stop' or 'enter' to confirm the current word.</h2>
         <div style="font-size:30px;display:inline-block">Letter list: </div>
-	<div style="margin-left:200px;display:inline-block;;font-size:30px;text-decoration">
+	<div style="margin-left:200px;display:inline-block;font-size:30px;text-decoration">
 		Your word so far: <div style="display:inline-block;text-decoration:underline">{{ word }}</div>
 	</div>
 	<table border="0" id="letters">
@@ -112,7 +106,7 @@
 				26.z
 			</td>
 		</tr>
-	</table>-->
+	</table>
 </div>
 </div>
 {% endblock %}
