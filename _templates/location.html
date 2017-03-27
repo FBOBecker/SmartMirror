@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+{{ super() }}
+{% if user_name %}
+{% endif %}
+
+<div class='location'>
+        <h1>
+            <span>Direction to "{{ url }}"</span>
+        </h1>
+    <iframe src="https://www.google.com/maps?saddr=My+Location&daddr={{ url }}&dirflg={{ type }}&output=embed" height="500" width="1000" frameborder="0"></iframe>
+</div>
+{% endblock %}

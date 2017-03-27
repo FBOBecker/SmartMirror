@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+{{ super() }}
+{% if user_name %}
+{% endif %}
+
+<div class='location'>
+        <h1>
+            <span>[SPELL MODE]</span>
+        </h1>
+        <h2>Choose the letter by saying the matching number. Say 'done', 'stop' or 'enter' to confirm the current word.</h2>
+        <h3>Letter list:</h3>
+        <ol>
+            {% for key, value in letter.items() %}
+            <li>{{ letter[key] }}</li>
+            {% endfor %}
+        </ol>
+        <h3>Your word so far: {{ word }}</h3>
+</div>
+{% endblock %}

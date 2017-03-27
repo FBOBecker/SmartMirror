@@ -15,6 +15,7 @@ from speech import write
 from urllib.parse import quote
 from PyQt5.QtCore import QUrl, QThread, pyqtSignal
 
+import random
 import requests
 
 weather_api_token = tokens.WEATHER_API_TOKEN
@@ -27,6 +28,8 @@ class Bot(QThread):
     URL_USER_MANAGEMENT = "http://localhost/user_management"
     URL_FORECAST = "http://localhost/forecast/{}/{}"
     URL_RESPONSE = "http://localhost/response"
+    URL_LOCATION = "http://localhost/location/{}/{}"
+    URL_SPELL = "http://localhost/spell/{}"
 
     page_changed = pyqtSignal(QUrl)
 
@@ -94,35 +97,90 @@ class Bot(QThread):
             if intent is not None:
                 if intent == 'weather':
                     location = self.get_location(json_resp)
-                    if location or self.current_user.hometown:
-                        print(date_time)
-                        print("++++++++++++++++++++")
-                        self.pyqt_change_url(self.URL_FORECAST.format((location if location else self.current_user.hometown), date_time))
+                    if location:
+                        self.pyqt_change_url(self.URL_FORECAST.format(location, date_time))
                     else:
-                        self.pyqt_change_url(self.URL_USER_HOME.format(date_time, name), "Desired text")
-                        location = self.speech()
-                        if location in self.cities:
-                            self.pyqt_change_url(self.URL_USER_HOME.format(date_time, name))
+                        while not location:
+                            self.pyqt_change_url(self.active_url,
+                                                 "For which city would you like to have a weather forecast?")
+                            location = self.speech()
+                            if location in self.cities:
+                                self.pyqt_change_url(self.URL_FORECAST.format(location, date_time))
+                                break
+                            else:
+                                self.pyqt_change_url(self.active_url, 'I do not know of this place, sorry! Try again!')
+                                location = None
+                                sleep(2)
+
+                elif intent == "direction":
+                    t_type = None
+                    location = self.get_location(json_resp)
+                    self.pyqt_change_url(self.active_url,
+                                         '1. Directions to ' + location + '\n2. Try new destination with spell mode')
+                    while 1:
+                        c = self.speech()
+                        if c in ["one", "directions"]:
+                            break
+                        elif c in ["two", "new destination", "spell mode", "spell"]:
+                            location = self.spell_word()
+                            break
+                    while not t_type:
+                        self.pyqt_change_url(self.active_url,
+                                             'Please choose the type of transportation:\n1. public transportation\n2. '
+                                             'by foot\n3. by car\n4. bicycle')
+                        command = self.speech()
+                        if command in ["one", "public", "public transportation"]:
+                            t_type = "r"
+                        elif command in ["two", "walking", "by foot", "foot", "walk"]:
+                            t_type = "w"
+                        elif command in ["three", "drive", "car", "driving", "by car"]:
+                            t_type = "c"
+                        elif command in ["four", "bicycle", "riding bicycle", "ride", "bicycling", "cycling"]:
+                            t_type = "b"
                         else:
-                            self.pyqt_change_url(self.URL_USER_HOME.format(date_time, name), 'I do not know of this place, sorry!')
+                            self.pyqt_change_url(self.active_url, 'I did not understand you. Please try again!')
+                            sleep(2)
+
+                    self.pyqt_change_url(self.URL_LOCATION.format(location, t_type))
+
                 elif intent == 'hometown':
                     self.set_user_location()
+
                 elif intent == 'logout':
                     self.logout()
+
                 elif intent == 'login':
                     self.login()
+
                 elif intent == 'greeting':
-                    self.pyqt_change_url(self.URL_USER_HOME.format(0, name), 'Hello yourself!')
+                    self.pyqt_change_url(self.URL_USER_HOME.format(0, name), random.choice(['Hello yourself!',
+                                                                                            'Hi there!', 'Hi!', 'Hola!',
+                                                                                            'Greetings!']))
                 elif intent == 'options':
                     self.use_options()
                 elif intent == 'user_creation':
-                    self.create_new_user()
+                    if not self.current_user:
+                        self.create_new_user()
+                    else:
+                        self.pyqt_change_url(self.active_url, 'You are already logged in as ' + self.current_user.name)
                 elif intent == 'user_deletion':
                     self.delete_user()
                 elif intent == 'user_show':
                     self.show_users()
                 elif intent == 'shutdown':
                     exit()
+                elif intent == 'fairytale':
+                    self.pyqt_change_url(self.active_url, "Laaaame...")
+                elif intent == 'insult':
+                    action = random.choice(['Pardon me?', 'Excuse me?', 'Be careful!', 'Come again?', 'Shame on you!',
+                                            "You got 30 seconds to think about what you just did!"])
+
+                    if len(action) > 15:
+                        for i in range(1, 30):
+                            self.pyqt_change_url(self.active_url, str(i) + " " + action)
+                            sleep(1)
+
+                    self.pyqt_change_url(self.URL_USER_HOME.format(0, name), action)
             else:
                 self.pyqt_change_url(self.active_url, 'I do not understand the intent of your statement.')
         
@@ -133,10 +191,20 @@ class Bot(QThread):
         if self.logged_in():
             if self.current_user.hometown is not None:
                 print("Your current hometown is '" + self.current_user.hometown + "'")
-            self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name), "Telle me which town to set as your hometown.")
+            self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name),
+                                 "1.[NORMAL MODE]\n2.[SPELL MODE]")
             print('Tell me which town to set as your hometown.')
 
-            command = self.speech()
+            while 1:
+                command = self.speech()
+                if command in ["one", "normal", "normal mode"]:
+                    self.pyqt_change_url(self.URL_RESPONSE,
+                                         "[NORMAL MODE] Tell me which town to set as your hometown.")
+                    command = self.speech()
+                    break
+                elif command in ["two", "spell mode", "spell"]:
+                    command = self.spell_word()
+                    break
 
             if command in self.cities:
                 self.current_user.hometown = command
@@ -145,7 +213,8 @@ class Bot(QThread):
                     if user["name"] == self.current_user.name:
                         user['hometown'] = self.current_user.hometown
                 dump_data_to_file(data, "users.json")
-                self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name), 'Hometown successfully set to ' + self.current_user.hometown + '!')
+                self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name),
+                                     'Hometown successfully set to ' + self.current_user.hometown + '!')
                 print("Set your hometown to '" + self.current_user.hometown + "'.")
             else:
                 self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name), "I may not know that city.")
@@ -156,7 +225,8 @@ class Bot(QThread):
     def use_options(self):
         if self.logged_in():
             self.pyqt_change_url(self.URL_USER_HOME.format(self.current_user.name, self.current_user.hometown,
-                "You can ask me for the weather, set your hometown, manage your hobbies or log out."))
+                                                           "You can ask me for the weather, set your hometown, "
+                                                           "manage your hobbies or log out."))
         else:
             self.user_management()
 
@@ -173,12 +243,13 @@ class Bot(QThread):
             self.current_user.add_hobbies()
         elif any(command in w for w in ["three", "remove", "remove hobbies", "remove your hobbies"]):
             self.current_user.remove_hobbies()
-        elif any(command in w for w in ["four", "back", "go back"]):
+        elif any(command in w for w in ["4", "back", "go back"]):
             return
 
     def user_management(self):
         if(self.logged_in()):
-            self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name), "You are already logged in as " + self.current_user.name + ".")
+            self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name),
+                                 "You are already logged in as " + self.current_user.name + ".")
             return
         else:
             self.pyqt_change_url(self.URL_USER_MANAGEMENT)
@@ -197,10 +268,17 @@ class Bot(QThread):
         else:
             correct = False
             while not correct:
-                self.pyqt_change_url(self.URL_RESPONSE, "New User creation. Please spell your name for me. To cancel say 'abort' or 'cancel'.")
+                self.pyqt_change_url(self.URL_RESPONSE, "New user creation. Choose: 1. [NORMAL MODE]\n2. [SPELL MODE]")
                 print("New User creation. Please spell your name for me. To cancel say 'abort' or 'cancel'.")
-                self.pyqt_change_url
-                command = self.speech()
+                while 1:
+                    command = self.speech()
+                    if command in ["one", "normal", "normal mode"]:
+                        self.pyqt_change_url(self.URL_RESPONSE, "[NORMAL MODE] New user creation. Please tell me your name.")
+                        command = self.speech()
+                        break
+                    elif command in ["two", "spell mode", "spell"]:
+                        command = self.spell_word()
+                        break
                 print("You said '" + command + "'. Is that correct?")
                 self.pyqt_change_url(self.URL_RESPONSE, "You said '" + command + "'. Is that correct?")
                 if any(command in w for w in CANCEL_LIST):
@@ -295,12 +373,14 @@ class Bot(QThread):
     def login(self, user_name=''):
         if self.current_user is not None:
             print("You are already logged in as " + self.current_user.name + ". Log out first.")
-            self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name), "You are already logged in as " + self.current_user.name + ". Log out first.")
+            self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name), "You are already logged in as "
+                                 + self.current_user.name + ". Log out first.")
         else:
             user_list = get_user_list()
             if user_list is None or len(user_list) == 0:
                 print("There are no Users to chose from. - Redirecting to User Creation")
-                self.pyqt_change_url(self.URL_RESPONSE, "There are no Users to chose from. - Redirecting to User Creation")
+                self.pyqt_change_url(self.URL_RESPONSE, "There are no Users to chose from. - "
+                                                        "Redirecting to User Creation")
                 sleep(3)
                 self.create_new_user()
             else:
@@ -354,7 +434,6 @@ class Bot(QThread):
                             dump_data_to_file(data, 'users.json')
                             print("Hello " + self.current_user.name + "!\nYou are logged in now!")
 
-                
                 self.pyqt_change_url(self.URL_USER_HOME.format(0, self.current_user.name))
 
     def logout(self):
@@ -422,5 +501,25 @@ class Bot(QThread):
         if message is None:
             self.page_changed.emit(QUrl(url))
         else:
-            self.page_changed.emit(QUrl(url + '?msg=' + quote(message) ))
+            self.page_changed.emit(QUrl(url + '?msg=' + quote(message)))
         self.active_url = url
+
+    def spell_word(self):
+        letter = {"one": "a", "two": "b", "three": "c", "4": "d", "5": "e", "6": "f", "7": "g", "8": "h",
+                  "9": "i", "10": "j", "11": "k", "12": "l", "13": "m", "14": "n", "15": "o", "16": "p",
+                  "17": "q", "18": "r", "19": "s", "20": "t", "21": "u", "22": "v", "23": "w", "24": "x",
+                  "25": "y", "26": "z"}
+        stop = None
+        result = ""
+        while not stop:
+            self.pyqt_change_url(self.URL_SPELL.format(result)),
+            l = self.speech()
+
+            if l in ["done", "stop", "enter"]:
+                stop = True
+                return result
+            elif l in letter.keys():
+                result += letter[l]
+            else:
+                self.pyqt_change_url(self.active_url, "I did not understand you, please try again!")
+                sleep(1)
