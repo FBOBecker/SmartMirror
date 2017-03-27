@@ -102,7 +102,6 @@ class Bot(QThread):
 
             if intent is not None:
                 if intent == 'weather':
-                    location = self.get_location(json_resp)
                     if location:
                         self.pyqt_change_url(self.URL_FORECAST.format(location, date_time))
                     else:
@@ -518,7 +517,8 @@ class Bot(QThread):
             if(os.path.isfile("last_use.json")):
                 os.remove("last_use.json")
 
-    def get_intent(self, json_wit):
+    @staticmethod
+    def get_intent(json_wit):
         intent = None
         if 'entities' in json_wit and 'intent' in json_wit['entities']:
             entities = json_wit['entities']
@@ -543,7 +543,7 @@ class Bot(QThread):
         if message is None:
             self.page_changed.emit(QUrl(url))
         else:
-            self.page_changed.emit(QUrl(url + '?msg=' + quote(message) ))
+            self.page_changed.emit(QUrl(url + '?msg=' + quote(message)))
             self.message = True
         self.active_url = url
 

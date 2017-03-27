@@ -105,7 +105,7 @@ def sleep():
 def get_weather(city, date_time=0):
     if date_time == '0' or date_time == 'None':
         date_time = 0
-
+    print(date_time)
     if date_time != 0:
         date_time = dateutil.parser.parse(date_time)
         time_dif = abs((date_time - datetime.now(timezone.utc)).total_seconds())
