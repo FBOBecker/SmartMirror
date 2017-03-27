@@ -96,9 +96,11 @@ def location(url, t_type):
 def spell(word=""):
     return render_template("spell.html", word=word, letter=LETTERS)
 
+
 @main.route("/sleep")
 def sleep():
     return render_template("sleep.html", name=None)
+
 
 def get_weather(city, date_time=0):
     if date_time == '0' or date_time == 'None':

@@ -160,7 +160,7 @@ class Bot(QThread):
 
                 elif intent == 'greeting':
                     self.pyqt_change_url(self.active_url, random.choice(['Hello yourself!',
-                                                                                            'Hi there!', 'Hi!', 'Hola!',                                                                   'Greetings!']))
+                                                                         'Hi there!', 'Hi!', 'Hola!', 'Greetings!']))
                 elif intent == 'options':
                     self.use_options()
 
