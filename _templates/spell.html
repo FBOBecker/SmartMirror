@@ -1,20 +1,112 @@
 {% extends "base.html" %}
 {% block content %}
 {{ super() }}
-{% if user_name %}
-{% endif %}
 
-<div class='location'>
+<div style=";margin-top:100px">
         <h1>
-            <span>[SPELL MODE]</span>
+            <span style="margin-left:350px">[SPELL MODE]</span>
         </h1>
+<div style="margin-left:150px; width:700px">
+
         <h2>Choose the letter by saying the matching number. Say 'done', 'stop' or 'enter' to confirm the current word.</h2>
-        <h3>Letter list:</h3>
-        <ol>
-            {% for key, value in letter.items() %}
-            <li>{{ letter[key] }}</li>
-            {% endfor %}
-        </ol>
-        <h3>Your word so far: {{ word }}</h3>
+        <div style="font-size:30px;display:inline-block">Letter list: </div>
+	<div style="margin-left:200px;display:inline-block;;font-size:30px;text-decoration">
+		Your word so far: <div style="display:inline-block;text-decoration:underline">{{ word }}</div>
+	</div>
+	<table border="0" id="letters">
+		<tr>
+			<td>
+				1.&nbsp;a
+			</td>
+			<td>
+				2.&nbsp;b
+			</td>
+			<td>
+				3.&nbsp;c
+			</td>
+			<td>
+				4.&nbsp;d
+			</td>
+		</tr>
+		<tr>
+			<td>
+				5.&nbsp;e
+			</td>
+			<td>
+				6.&nbsp;f
+			</td>
+			<td>
+				7.&nbsp;g
+			</td>
+			<td>
+				8.&nbsp;h
+			</td>
+		</tr>
+		<tr>
+			<td>
+				9.&nbsp;i
+			</td>
+			<td>
+				10.j
+			</td>
+			<td>
+				11.k
+			</td>
+			<td>
+				12.l
+			</td>
+		</tr>
+		<tr>
+			<td>
+				13.m
+			</td>
+			<td>
+				14.n
+			</td>
+			<td>
+				15.o
+			</td>
+			<td>
+				16.p
+			</td>
+		</tr>
+		<tr>
+			<td>
+				17.q
+			</td>
+			<td>
+				18.r
+			</td>
+			<td>
+				19.s
+			</td>
+			<td>
+				20.t
+			</td>
+		</tr>
+		<tr>
+			<td>
+				21.u
+			</td>
+			<td>
+				22.v
+			</td>
+			<td>
+				23.w
+			</td>
+			<td>
+				24.x
+			</td>
+		</tr>
+		<tr>
+			<td>
+				25.y
+			</td>
+			<td>
+				26.z
+			</td>
+		</tr>
+	</table>
+</div>
 </div>
 {% endblock %}

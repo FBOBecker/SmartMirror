@@ -321,7 +321,7 @@ class Bot(QThread):
                 print("You said '" + command + "'. Is that correct?")
                 self.pyqt_change_url(self.URL_RESPONSE, "You said '" + command + "'. Is that correct?")
                 if any(command in w for w in CANCEL_LIST):
-                    return
+                    return self.pyqt_change_url(self.USER_MANAGEMENT, "I'm listening...")
                 approval_command = self.speech()
                 if any(approval_command in w for w in APPROVAL_LIST):
                     print("You said " + approval_command + ".")

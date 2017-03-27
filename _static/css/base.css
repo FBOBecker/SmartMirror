@@ -66,3 +66,9 @@ font-size:20px;
 	top: 10px;
 left:1050px;
 }
+
+#letters tr td{
+	padding-left:100px;
+padding-top:30px;
+font-size:30px;
+}
